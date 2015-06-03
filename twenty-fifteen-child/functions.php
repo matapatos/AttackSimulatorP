@@ -81,7 +81,9 @@ function showAttacks(){
         }]);
 </script>';
 }
-
+function addAttacks() {
+    echo 'Ola';
+}
 //
 // Your code goes below
 //
