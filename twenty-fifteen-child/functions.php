@@ -1,34 +1,5 @@
 <?php
-//
-// Recommended way to include parent theme styles.
-//  (Please see http://codex.wordpress.org/Child_Themes#How_to_Create_a_Child_Theme)
-//  
-add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles' );
-function theme_enqueue_styles() {
-    wp_enqueue_style( 'parent-style', get_template_directory_uri() . '/style.css' );
-    wp_enqueue_style( 'child-style',
-        get_stylesheet_directory_uri() . '/style.css',
-        array('parent-style')
-    );
-}
-
-function theme_enqueue_scripts()
-{
-    wp_register_script('attacks-script', get_stylesheet_directory() . '/js/attacks.js');
-    wp_enqueue_script( 'attacks-script' );
-    wp_register_script('angular', 'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js');
-    wp_enqueue_script( 'angular' );
-}
-add_action( 'wp_enqueue_scripts', 'theme_enqueue_scripts' );
-
-$allAttacks;
-
-function getAllAttacks(){
-    global $wpdb;
-    return $wpdb->get_results( 'SELECT * FROM attacks', OBJECT);
-}
-
-function showAttacks(){
+function showAttacksOLD(){
     global $allAttacks;
     $allAttacks = getAllAttacks();
     $size = count($allAttacks);
@@ -81,6 +52,263 @@ function showAttacks(){
         }]);
 </script>';
 }
+//
+// Recommended way to include parent theme styles.
+//  (Please see http://codex.wordpress.org/Child_Themes#How_to_Create_a_Child_Theme)
+//  
+add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles' );
+function theme_enqueue_styles() {
+    wp_enqueue_style( 'parent-style', get_template_directory_uri() . '/style.css' );
+    wp_enqueue_style( 'child-style',
+        get_stylesheet_directory_uri() . '/style.css',
+        array('parent-style')
+    );
+}
+
+function theme_enqueue_scripts()
+{
+    wp_enqueue_script( 'attacks-script' );
+    wp_register_script('angular', 'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js');
+    wp_enqueue_script( 'angular' );
+}
+add_action( 'wp_enqueue_scripts', 'theme_enqueue_scripts' );
+
+$allAttacks;
+
+function getAllAttacks(){
+    global $wpdb;
+    return $wpdb->get_results( 'SELECT * FROM attacks', OBJECT);
+}
+
+function showAttacks(){
+    global $allAttacks;
+    $allAttacks = getAllAttacks();
+    $size = count($allAttacks);
+    $i = 0;
+    echo '<div ng-app="attacks">
+		<div ng-controller="AttacksController">
+			<form id="myForm" ng-submit="submit()" novalidate>
+				<label>Search:
+					<input ng-model="search.$">
+				</label>
+				<br/>
+				<label>Operating System:
+					<select ng-model="search.os">
+						<option value="">All</option>
+						<option value="Windows">Windows</option>
+						<option value="Linux">Linux</option>
+					</select>
+				</label>
+				<br/>
+				<label>Select:
+					<select ng-model="search.select">
+						<option value="">All</option>
+						<option value="true">Yes</option>
+						<option value="false">No</option>
+					</select>
+				</label>
+				<br/>
+				<label>Generate type:
+					<select ng-model="geneType" ng-change="checkIsRemotly()">
+						<option value="">Instructions</option>
+						<option value="exe">Executable file</option>
+						<option value="remotly">Remotly</option>
+					</select>
+				</label>
+				<br/>
+				<table>
+					<tr>
+						<td>Name</td>
+						<td>Description</td>
+						<td>Operating System</td>
+						<td>Select</td>
+					</tr>
+					<tr ng-repeat="a in attacks | filter:search">
+						<td>{{ a.name }}</td>
+						<td>{{ a.description }}</td>
+						<td>{{ a.os }}</td>
+						<td>
+							<input type="checkbox" ng-model="a.select" ng-change="attackAddedOrRemoved({{a}})"/>
+						</td>
+					</tr>
+				</table>
+				<div id="configs" ng-show="isRemotly">
+					<h3>Configurations</h3>
+					<label>IP address:
+						<input id="ip" type="text" placeholder="IP address" ng-pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" required/>
+						<span class="required_field">*</span>
+					</label>
+					<br/>
+					<label>Username:
+						<input id="username" type="text" placeholder="Username" ng-minlength="1" required/>
+						<span class="required_field">*</span>
+					</label>
+					<br/>
+					<label>Password:
+						<input id="password" type="password" placeholder="Password" ng-minlength="1" required/>
+						<span class="required_field">*</span>
+					</label>
+				</div>
+				<input type="submit" value="Submit" />
+			</form>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var app = angular.module("attacks", []);
+		app.controller("AttacksController", ["$scope", "$http",
+        function ($scope, $http) {
+				//----------------- SCOPE VARIABLES/FUNCTIONS ------------
+				$scope.attacks = [{
+					id: 1,
+					name: "Brute force",
+					description: "desc1",
+					os: "Windows",
+					select: false
+                },
+								{
+					id: 2,
+					name: "Linux force",
+					description: "desc2",
+					os: "Linux",
+					select: false
+                } ];
+				$scope.geneType = "";
+				$scope.isRemotly = false;
+				$scope.selectedAttacksID = [];
+				$scope.numWindowsAttacks = 0;
+				$scope.numLinuxAttacks = 0;
+
+				$scope.submit = function () {
+					$scope.selectedAttacksID = getSelectedAttacksID();
+					if ($scope.selectedAttacksID.length > 0) { //Check if array it"s empty
+						if ($scope.geneType == "")
+							askForInstructions();
+						else if ($scope.geneType == "exe")
+							downloadFile();
+						else remotly();
+					} else {
+						alert("You must select at least one attack before submit.");
+					}
+				};
+				$scope.checkIsRemotly = function () {
+					if ($scope.geneType == "remotly") {
+						$scope.isRemotly = true;
+						changeConfigsState(true);
+					} else {
+						$scope.isRemotly = false;
+						//RESET FIELDS
+						changeConfigsState(false);
+						resetConfigs();
+					}
+				}
+				$scope.attackAddedOrRemoved = function (attack) {
+					if (attack.os == "Windows") {
+						if (!attack.select) {
+							$scope.numWindowsAttacks += 1;
+						} else $scope.numWindowsAttacks -= 1;
+					} else { //LINUX
+						if (!attack.select) {
+							$scope.numLinuxAttacks += 1;
+						} else $scope.numLinuxAttacks -= 1;
+					}
+				};
+				//----------------- END SCOPE VARIABLES/FUNCTIONS ------------
+
+				//-------------------- AUXILIARY METHODS ----------------------
+
+				function getSelectedAttacksID() {
+					var attacksID = [];
+					for (var i = 0; i < $scope.attacks.length; i++) {
+						var attack = $scope.attacks[i];
+						if (attack.select == true)
+							attacksID.push(attack.id);
+					}
+
+					return attacksID;
+				}
+
+				function askForInstructions() {
+					var data = {
+						"attacks" : $scope.selectedAttacksID
+					};
+					var callback = function () {
+
+					};
+
+					sendPostRequest(data, callback, "instructions");
+				}
+
+				function downloadFile() {
+					var data = {
+						"action" : "downloadFile",
+						"attacks" : $scope.selectedAttacksID
+					};
+					var callback = function () {
+						if ($scope.numLinuxAttacks > 0)
+							getLinkFilename(data, "file.sh").click();
+						if ($scope.numWindowsAttacks > 0)
+							getLinkFilename(data, "file.bat").click();
+					};
+
+					sendPostRequest(data, callback, "downloadFile");
+				}
+
+				function remotly() {
+					var ipAddress = document.getElementById("ip").value,
+						user = document.getElementById("username").value,
+						pass = document.getElementById("password").value;
+					var callback = function () {
+
+					};
+					var data = {
+						"attacks" : $scope.selectedAttacksID,
+						"ip" : ipAddress,
+						"username" : user,
+						"password" : pass
+					};
+					sendPostRequest(data, callback, "remotly");
+				}
+
+				function changeConfigsState(bool) {
+					document.getElementById("myForm").noValidate = !bool;
+				}
+
+				function sendPostRequest(obj, callback, r_action) {						
+					$http({
+						method: "POST",
+						url:  "../wp-admin/admin-ajax.php",
+						params: {
+							"action" : r_action,
+							"data" : obj
+						},
+					}).
+					success( function( data, status, headers, config ) {
+						alert("SUCCESS: " + data.success + "DATA: " + data.data);
+					}).
+					error(function(data, status, headers, config) {});
+					
+				}
+
+				function resetConfigs() {
+					document.getElementById("ip").value = "";
+					document.getElementById("username").value = "";
+					document.getElementById("password").value = "";
+				}
+
+				function getLinkFilename(data, filename) {
+					var anchor = angular.element("<a/>");
+					return anchor.attr({
+						href: "data:attachment/pl;charset=utf-8," + encodeURI(data),
+						target: "_blank",
+						download: filename
+					})[0];
+				}
+
+				//-------------------- END AUXILIARY METHODS -------------------
+        }]);
+	</script>';
+}
+
 function addAttacks() {
     echo '<form action="action_page.php">
             <div id="attack">
@@ -178,6 +406,3 @@ function addAttacks() {
             }
         </script>';
 }
-//
-// Your code goes below
-//
