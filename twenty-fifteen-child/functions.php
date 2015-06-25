@@ -82,7 +82,101 @@ function showAttacks(){
 </script>';
 }
 function addAttacks() {
-    echo 'Ola';
+    echo '<form action="action_page.php">
+            <div id="attack">
+                Name:*<br>
+                <input type="text" name="name" required>
+                <br>
+                Description:*<br>
+                <input type="text" name="desc" required>
+                <fieldset >
+                    <legend>Operative system:*</legend>
+                    <input type="radio" name="so" value="win" required>Windows<br>
+                    <input type="radio" name="so" value="linux">Linux<br>
+                </fieldset><br>
+                Action:
+                <select id="select_action" onchange="onSelectChange(this)">
+                  <option value="file">File</option>
+                  <option value="software">Software</option>
+                </select>
+                <br><br>
+            </div>
+            <div id="field_soft">
+                Software:
+                <input type="file" name="soft" id="software">
+                <br>
+            </div>
+            <fieldset id="field_files">
+                <legend>Files</legend>
+                <div id="files">
+                    <div id="file0">
+                        File path:<br>
+                        <input type="text" name="file_path0">
+                        <br>
+                        String:<br>
+                        <input type="text" name="string0">
+                        <br><br>
+                    </div>
+                </div>
+                <button id="addfiles" type="button" onclick="addFile()" style="float: right;">Add file</button><br>
+            </fieldset>
+            <br>
+            <input type="submit" value="Submit" style="float: right;">
+            <br>
+        </form>
+        <script>
+
+            var fileNumber=1;
+            document.getElementById("field_soft").style.display="none";
+            function onSelectChange(p1){
+                var txt = p1.value;
+                if(txt=="file"){
+                    document.getElementById("field_soft").style.display="none";document.getElementById("field_files").style.display="block";
+                }else{ document.getElementById("field_soft").style.display="block";
+                      document.getElementById("field_files").style.display="none";
+                }
+            }
+            function addFile(){
+                var node = document.createElement("DIV");
+                node.id="file"+fileNumber;   
+                document.getElementById("files").appendChild(node);    
+                addElement("SPAN","File path:");
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                node = addElement("INPUT","File path:");
+                node.id="file_path"+fileNumber;
+                node.type="text";
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                addElement("SPAN","String:");
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                node = addElement("INPUT","String:");
+                node.id="string"+fileNumber;
+                node.type = "text";
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                addElement("BUTTON","Remove").id=fileNumber;
+                
+                
+                
+                fileNumber++; 
+            }
+            function addElement(p1,p2){
+                var node = document.createElement(p1);                
+                var textnode = document.createTextNode(p2);         
+                node.appendChild(textnode);
+                if(p1=="BUTTON"){
+                    node.type="button";
+                    node.onclick = function(){
+                        removeFile(this);
+                    };
+                }
+                document.getElementById("file"+fileNumber).appendChild(node);
+                return node;
+            }
+            function removeFile(p1){
+                var id = p1.id;
+                var node = document.getElementById("file"+id);
+                document.getElementById("files").removeChild(node);
+            }
+        </script>';
 }
 //
 // Your code goes below
