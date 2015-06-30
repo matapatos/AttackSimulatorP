@@ -331,7 +331,7 @@ function addAttacks() {
                 <input type="text" name="desc" required>
                 <fieldset >
                     <legend>Operative system:*</legend>
-                    <input type="radio" name="so" value="win" required>Windows<br>
+                    <input type="radio" name="so" value="windows" required>Windows<br>
                     <input type="radio" name="so" value="linux">Linux<br>
                 </fieldset><br>
                 Action:
@@ -351,10 +351,10 @@ function addAttacks() {
                 <div id="files">
                     <div id="file0">
                         File path:<br>
-                        <input type="text" name="file_path0">
+                        <input type="text" id="fp0" name="file_path0">
                         <br>
                         String:<br>
-                        <input type="text" name="string0">
+                        <input type="text" id="s0" name="string0">
                         <br><br>
                     </div>
                 </div>
@@ -368,14 +368,31 @@ function addAttacks() {
         <script>
 
             var fileNumber=1;
-
+            document.getElementById("fp0").required=true;
+            document.getElementById("s0").required=true;
             document.getElementById("field_soft").style.display="none";
             function onSelectChange(p1){
                 var txt = p1.value;
                 if(txt=="file"){
-                    document.getElementById("field_soft").style.display="none";document.getElementById("field_files").style.display="block";
-                }else{ document.getElementById("field_soft").style.display="block";
-                      document.getElementById("field_files").style.display="none";
+                    for(var i=0;i<fileNumber;i++){
+                        if(document.getElementById("fp"+i)!=null){
+                            document.getElementById("fp"+i).required=true;
+                            document.getElementById("s"+i).required=true;
+                        }
+                    }
+                    document.getElementById("software").required=false;
+                    document.getElementById("field_soft").style.display="none";
+                    document.getElementById("field_files").style.display="block";
+                }else{
+                    for(var i=0;i<fileNumber;i++){
+                        if(document.getElementById("fp"+i)!=null){
+                            document.getElementById("fp"+i).required=false;
+                            document.getElementById("s"+i).required=false;
+                        }
+                    }
+                    document.getElementById("field_soft").style.display="block";
+                    document.getElementById("field_files").style.display="none";
+                    document.getElementById("software").required=true;
                 }
             }
             function addFile(){
@@ -385,14 +402,18 @@ function addAttacks() {
                 addElement("SPAN","File path:");
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","File path:");
+                node.id="fp"+fileNumber;
                 node.name="file_path"+fileNumber;
                 node.type="text";
+                node.required=true;
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("SPAN","String:");
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","String:");
+                node.id="s"+fileNumber;
                 node.name="string"+fileNumber;
                 node.type = "text";
+                node.required=true;
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("BUTTON","Remove").id=fileNumber;
                 document.getElementById("nf").value=fileNumber;
