@@ -1,59 +1,10 @@
 <?php
+const INVALID_ARGUMENTS = "Invalid request arguments.";
+const MISSING_ARGUMENTS = "Request arguments missing.";
+const REQUEST_GENERAL_ERROR = "Error during the request.";
+
 if (!session_id()) {
     session_start();
-}
-function showAttacksOLD(){
-    global $allAttacks;
-    $allAttacks = getAllAttacks();
-    $size = count($allAttacks);
-    $i = 0;
-    echo '<div ng-app="attacks">
-    <div ng-controller="AttacksController">
-        <label>Search: <input ng-model="search.$"></label><br/>
-        <label>Operating System: 
-                    <select ng-model="search.os">
-                        <option value="">All</option>
-                        <option value="Windows">Windows</option>
-                        <option value="Linux" selected>Linux</option>
-                    </select></label><br/>
-        <label>Select: 
-                    <select ng-model="search.select">
-                        <option value="">All</option>
-                        <option value="true">Yes</option>
-                        <option value="false" selected>No</option>
-                    </select></label><br/>
-        <table>
-            <tr>
-                <td>Name</td>
-                <td>Description</td>
-                <td>Operating System</td>
-                <td>Select</td>
-            </tr>
-            <tr ng-repeat="a in attacks | filter:search">
-                <td>{{ a.name }}</td>
-                <td>{{ a.description }}</td>
-                <td>{{ a.os }}</td>
-                <td><input type="checkbox" ng-model="a.select"/></td>
-            </tr>
-        </table>
-    </div>
-</div>
-<script type="text/javascript">
-    var app = angular.module("attacks", []);
-    app.controller("AttacksController", ["$scope",
-        function($scope){
-
-            $scope.attacks = [
-            ';
-        foreach ( $allAttacks as $r ) {
-            echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->so . '", select: false}';
-                $i+=1;
-                if($i < $size)
-                    echo ',';
-            }
-        echo '];
-        }]);
-</script>';
 }
 //
 // Recommended way to include parent theme styles.
@@ -112,10 +63,10 @@ function showAttacks(){
 				</label>
 				<br/>
 				<label>Generate type:
-					<select ng-model="geneType" ng-change="checkIsRemotly()">
+					<select ng-model="geneType" ng-change="checkIsRemotely()">
 						<option value="">Instructions</option>
 						<option value="exe">Executable file</option>
-						<option value="remotly">Remotly</option>
+						<option value="remotely">Remotely</option>
 					</select>
 				</label>
 				<br/>
@@ -135,7 +86,7 @@ function showAttacks(){
 						</td>
 					</tr>
 				</table>
-				<div id="configs" ng-show="isRemotly">
+				<div id="configs" ng-show="isRemotely">
 					<h3>Configurations</h3>
 					<label>IP address:
 						<input id="ip" type="text" placeholder="IP address" ng-pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" required/>
@@ -152,6 +103,7 @@ function showAttacks(){
 						<span class="required_field">*</span>
 					</label>
 				</div>
+				<input id="myAttacks" type="hidden" name="myAttacks"/>
 				<input type="submit" value="Submit" />
 			</form>
 		</div>
@@ -161,22 +113,17 @@ function showAttacks(){
 		app.controller("AttacksController", ["$scope", "$http",
         function ($scope, $http) {
 				//----------------- SCOPE VARIABLES/FUNCTIONS ------------
-				$scope.attacks = [{
-					id: 1,
-					name: "Brute force",
-					description: "desc1",
-					os: "Windows",
-					select: false
-                },
-								{
-					id: 2,
-					name: "Linux force",
-					description: "desc2",
-					os: "Linux",
-					select: false
-                } ];
+				$scope.attacks = [
+            ';
+        foreach ( $allAttacks as $r ) {
+            echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->so . '", select: false, id: ' . $r->id . '}';
+                $i+=1;
+                if($i < $size)
+                    echo ',';
+            }
+        echo '];
 				$scope.geneType = "";
-				$scope.isRemotly = false;
+				$scope.isRemotely = false;
 				$scope.selectedAttacksID = [];
 				$scope.numWindowsAttacks = 0;
 				$scope.numLinuxAttacks = 0;
@@ -184,28 +131,28 @@ function showAttacks(){
 				$scope.submit = function () {
 					$scope.selectedAttacksID = getSelectedAttacksID();
 					if ($scope.selectedAttacksID.length > 0) { //Check if array it"s empty
-						if ($scope.geneType == "")
-							askForInstructions();
-						else if ($scope.geneType == "exe")
+						if ($scope.geneType == "exe")
 							downloadFile();
-						else remotly();
+						else if($scope.geneType == "remotely")
+							remotely();
+						else askForInstructions();
 					} else {
 						alert("You must select at least one attack before submit.");
 					}
 				};
-				$scope.checkIsRemotly = function () {
-					if ($scope.geneType == "remotly") {
-						$scope.isRemotly = true;
+				$scope.checkIsRemotely = function () {
+					if ($scope.geneType == "remotely") {
+						$scope.isRemotely = true;
 						changeConfigsState(true);
 					} else {
-						$scope.isRemotly = false;
+						$scope.isRemotely = false;
 						//RESET FIELDS
 						changeConfigsState(false);
 						resetConfigs();
 					}
 				}
 				$scope.attackAddedOrRemoved = function (attack) {
-					if (attack.os == "Windows") {
+					if (attack.os.toLowerCase() == "windows") {
 						if (!attack.select) {
 							$scope.numWindowsAttacks += 1;
 						} else $scope.numWindowsAttacks -= 1;
@@ -231,37 +178,37 @@ function showAttacks(){
 				}
 
 				function askForInstructions() {
-					var data = {
-						"attacks" : $scope.selectedAttacksID
-					};
-					var callback = function () {
+					var attacksElem = document.getElementById("myAttacks");
+					attacksElem.value = $scope.selectedAttacksID;
 
-					};
-
-					sendPostRequest(data, callback, "instructions");
+					var form = document.getElementById("myForm");
+						form.setAttribute("action", "instructions");
+						form.setAttribute("method", "post");
+						form.submit();
 				}
 
 				function downloadFile() {
 					var data = {
-						"action" : "downloadFile",
 						"attacks" : $scope.selectedAttacksID
 					};
-					var callback = function () {
+					var callback = function (recData) {
+						var json = JSON.parse(recData);
 						if ($scope.numLinuxAttacks > 0)
-							getLinkFilename(data, "file.sh").click();
+							getLinkFilename(json["linux"], "linux.sh").click();
 						if ($scope.numWindowsAttacks > 0)
-							getLinkFilename(data, "file.bat").click();
+							getLinkFilename(json["windows"], "windows.bat").click();
+						alert("Don \'t forget to execute the executable files in root/admin mode.");
 					};
 
 					sendPostRequest(data, callback, "downloadFile");
 				}
 
-				function remotly() {
+				function remotely() {
 					var ipAddress = document.getElementById("ip").value,
 						user = document.getElementById("username").value,
 						pass = document.getElementById("password").value;
-					var callback = function () {
-
+					var callback = function (recData) {
+						alert(recData);
 					};
 					var data = {
 						"attacks" : $scope.selectedAttacksID,
@@ -269,26 +216,30 @@ function showAttacks(){
 						"username" : user,
 						"password" : pass
 					};
-					sendPostRequest(data, callback, "remotly");
+					sendPostRequest(data, callback, "remotely");
 				}
 
 				function changeConfigsState(bool) {
 					document.getElementById("myForm").noValidate = !bool;
 				}
 
-				function sendPostRequest(obj, callback, r_action) {						
+				function sendPostRequest(obj, callback, r_action) {
 					$http({
 						method: "POST",
 						url:  "../wp-admin/admin-ajax.php",
 						params: {
 							"action" : r_action,
 							"data" : obj
-						},
+						}
 					}).
 					success( function( data, status, headers, config ) {
-						alert("SUCCESS: " + data.success + "DATA: " + data.data);
+						if(data.success)
+							callback(data.data);
+						else alert("Ocorreu um erro. Erro: " + data + " Status: " + status);
 					}).
-					error(function(data, status, headers, config) {});
+					error(function(data, status, headers, config) {
+						alert("An error ocourrs during the send process. Try more later.");
+					});
 					
 				}
 
@@ -440,4 +391,120 @@ function addAttacks() {
                 document.getElementById("files").removeChild(node);
             }
         </script>';
+}
+
+
+//---------------------------- AUXILIARY METHODS ----------------------------------
+function get_filesByAttackID($ID)
+{
+    global $wpdb;
+    return $wpdb->get_results("SELECT * FROM files WHERE attack_id=" . $ID, OBJECT);
+}
+
+function get_linuxAttacksByID($attacksID)
+{
+    global $wpdb;
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='linux'", OBJECT);
+}
+
+function get_windowsAttacksByID($attacksID)
+{
+    global $wpdb;
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='windows'", OBJECT);
+}
+
+//---------------------------- END AUXILIARY METHODS ----------------------
+
+function showInstructions(){
+    try{
+
+        $data = $_REQUEST["myAttacks"];
+        if( empty($data) )
+            wp_die(MISSING_ARGUMENTS);
+        $attacksID = explode(",", $data);
+        if(empty($attacksID))
+            wp_die(INVALID_ARGUMENTS);
+        $lin_attacks = get_linuxAttacksByID($attacksID);
+        $win_attacks = get_windowsAttacksByID($attacksID);
+        $i = 0;
+
+        echo '<div ng-app="instructions">
+            <div ng-controller="InstructionsController">
+                <h2 ng-show="win_attacks.length > 0">Windows attacks</h2>
+                <div ng-repeat="a in win_attacks">
+                    <h3>{{ a.name }}</h3>
+                    <div ng-repeat="f in a.files">
+                        <p>Copy this text:</p>
+                        <p><strong>{{ f.string }}</strong></p>
+                        <p>To:</p>
+                        <p><strong>{{ f.file_path }}</strong></p>
+                    </div>
+                </div>
+                <h2 ng-show="lin_attacks.length > 0">Linux attacks</h2>
+                <div ng-repeat="a in lin_attacks">
+                    <h3>{{ a.name }}</h3>
+                    <div ng-repeat="f in a.files">
+                        <p>Copy this text:</p>
+                        <p><strong>{{ f.string }}</strong></p>
+                        <p>To:</p>
+                        <p><strong>{{ f.file_path }}</strong></p>
+                    </div>
+                </div>
+            </div>
+            <input type="button" value="Back" onclick="goBack()"/>
+        </div>
+        <script type="text/javascript">
+            function goBack() {
+                window.history.back();
+            }
+            var app = angular.module("instructions", []);
+            app.controller("InstructionsController", ["$scope",
+               function ($scope){
+                  $scope.win_attacks = [
+                ';
+        $size = count($win_attacks);
+        foreach ( $win_attacks as $r ) {
+            $files = get_filesByAttackID($r->id);
+            echo '{name: "' . $r->name . '", files: [';
+            $files_size = count($files);
+            $j = 0;
+            foreach ($files as $f) {
+                echo '{ string: "' . $f->string . '", file_path: "' . $f->file_path . '" }';
+                $j += 1;
+                if($j < $files_size)
+                    echo ',';
+            }
+
+            echo ']}';
+            $i+=1;
+            if($i < $size)
+                echo ',';
+        }
+        echo '];
+                  $scope.lin_attacks = [
+                ';
+        $size = count($lin_attacks);
+        foreach ( $lin_attacks as $r ) {
+            $files = get_filesByAttackID($r->id);
+            echo '{name: "' . $r->name . '", files: [';
+            $files_size = count($files);
+            $j = 0;
+            foreach ($files as $f) {
+                echo '{ string: "' . $f->string . '", file_path: "' . $f->file_path . '" }';
+                $j += 1;
+                if($j < $files_size)
+                    echo ',';
+            }
+
+            echo ']}';
+            $i+=1;
+            if($i < $size)
+                echo ',';
+        }
+        echo '];
+              }]);
+        </script>';
+    }catch (Exception $ex){
+        wp_die(REQUEST_GENERAL_ERROR);
+    }
 }
