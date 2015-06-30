@@ -1,4 +1,7 @@
 <?php
+if (!session_id()) {
+    session_start();
+}
 function showAttacksOLD(){
     global $allAttacks;
     $allAttacks = getAllAttacks();
@@ -310,7 +313,16 @@ function showAttacks(){
 }
 
 function addAttacks() {
-    echo '<form action="action_page.php">
+	if(isset($_SESSION['hasAddAttack'])){
+		echo '<div id="usp-success-message">'.$_SESSION['hasAddAttack'].'</div>';
+		unset($_SESSION['hasAddAttack']);
+	}
+	if(isset($_SESSION['hasErrorAddAttack'])){
+		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].'</div>';
+		unset($_SESSION['hasErrorAddAttack']);
+	}
+    echo '<form action="../wp-admin/admin-post.php" method="POST">
+    		<input type="hidden" name="action" value="insert_attack">
             <div id="attack">
                 Name:*<br>
                 <input type="text" name="name" required>
@@ -323,7 +335,7 @@ function addAttacks() {
                     <input type="radio" name="so" value="linux">Linux<br>
                 </fieldset><br>
                 Action:
-                <select id="select_action" onchange="onSelectChange(this)">
+                <select id="select_action" name="act" onchange="onSelectChange(this)">
                   <option value="file">File</option>
                   <option value="software">Software</option>
                 </select>
@@ -348,6 +360,7 @@ function addAttacks() {
                 </div>
                 <button id="addfiles" type="button" onclick="addFile()" style="float: right;">Add file</button><br>
             </fieldset>
+            <input type="hidden" id="nf" name="numberFile" value="0"/>
             <br>
             <input type="submit" value="Submit" style="float: right;">
             <br>
@@ -355,6 +368,7 @@ function addAttacks() {
         <script>
 
             var fileNumber=1;
+
             document.getElementById("field_soft").style.display="none";
             function onSelectChange(p1){
                 var txt = p1.value;
@@ -371,17 +385,17 @@ function addAttacks() {
                 addElement("SPAN","File path:");
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","File path:");
-                node.id="file_path"+fileNumber;
+                node.name="file_path"+fileNumber;
                 node.type="text";
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("SPAN","String:");
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","String:");
-                node.id="string"+fileNumber;
+                node.name="string"+fileNumber;
                 node.type = "text";
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("BUTTON","Remove").id=fileNumber;
-                
+                document.getElementById("nf").value=fileNumber;
                 
                 
                 fileNumber++; 
