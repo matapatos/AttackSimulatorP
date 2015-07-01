@@ -30,7 +30,10 @@ function remotely(){
     $json['username'] = check_getParameterOrSendErrorMSG('username');
     $json['password'] = check_getParameterOrSendErrorMSG('password');
 
-//    wp_send_json_success("IP: " . $json['ip'] . " USERNAME: " . $json['username'] . " Password: " . $json['password']);
+
+//wp_send_json_success("IP: " . $json['ip'] . " USERNAME: " . $json['username'] . " Password: " . $json['password']);
+
+
     connectSsh($json['username'], 'sh ~/linux.sh', $json['ip']);
 }
 /**
@@ -70,7 +73,7 @@ function connectSsh($username, $command, $ip){
 
     // $execout=exec('ssh root@192.168.217.132 "/home/jails/jails-start-j2.sh" ',$output1,$result);
     $execout=exec('ssh ' . $username .'@'.$ip.' "'.$command.'" ',$output1,$result);
-    if($result !=0){
+    if($execout !=0){
         wp_send_json_success("SSH connection succeeded!");
     }
     else{
@@ -79,7 +82,7 @@ function connectSsh($username, $command, $ip){
 
 
 
-    return $output1;
+    return $execout;
 }
 
 function get_attacksRequested(){
