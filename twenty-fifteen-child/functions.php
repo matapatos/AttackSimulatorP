@@ -115,16 +115,18 @@ function showAttacks(){
 				//----------------- SCOPE VARIABLES/FUNCTIONS ------------
 				$scope.attacks = [
             ';
-        foreach ( $allAttacks as $r ) {
-            echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->so . '", select: false, id: ' . $r->id . '}';
-                $i+=1;
-                if($i < $size)
-                    echo ',';
-            }
-        echo '];
+    foreach ( $allAttacks as $r ) {
+        $hasSoftware = ($r->attack_action == "software" ? "true" : "false");
+        echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->so . '", select: false, id: ' . $r->id . ', hasSoftware: ' . $hasSoftware . '}';
+        $i+=1;
+        if($i < $size)
+            echo ',';
+    }
+    echo '];
 				$scope.geneType = "";
 				$scope.isRemotely = false;
 				$scope.selectedAttacksID = [];
+				$scope.selectedAttacksWithSoftware = [];
 				$scope.numWindowsAttacks = 0;
 				$scope.numLinuxAttacks = 0;
 
@@ -170,8 +172,11 @@ function showAttacks(){
 					var attacksID = [];
 					for (var i = 0; i < $scope.attacks.length; i++) {
 						var attack = $scope.attacks[i];
-						if (attack.select == true)
+						if (attack.select == true){
 							attacksID.push(attack.id);
+							if(attack.hasSoftware)
+								$scope.selectedAttacksWithSoftware.push(attacksID);
+						}
 					}
 
 					return attacksID;
@@ -185,6 +190,16 @@ function showAttacks(){
 						form.setAttribute("action", "instructions");
 						form.setAttribute("method", "post");
 						form.submit();
+				}
+
+				function downloadSoftwareAttacks(){
+					for(var i = 0; i < $scope.selectedAttacksWithSoftware.length; i++){
+						id = $scope.selectedAttacksWithSoftware[i];
+						var link = document.createElement("a");
+						link.setAttribute("href", "../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=" + id);
+						link.setAttribute("download", "");
+						link.click();
+					}
 				}
 
 				function downloadFile() {
@@ -201,6 +216,7 @@ function showAttacks(){
 					};
 
 					sendPostRequest(data, callback, "downloadFile");
+					downloadSoftwareAttacks();
 				}
 
 				function remotely() {
@@ -263,6 +279,7 @@ function showAttacks(){
 	</script>';
 }
 
+//TODO VER BUG DO CHOOSE FILE. NÃO SELECIONA BEM. PRINCIPALMENTE NO INICIO.
 function addAttacks() {
 	if(isset($_SESSION['hasAddAttack'])){
 		echo '<div id="usp-success-message">'.$_SESSION['hasAddAttack'].'</div>';
@@ -272,7 +289,7 @@ function addAttacks() {
 		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].'</div>';
 		unset($_SESSION['hasErrorAddAttack']);
 	}
-    echo '<form action="../wp-admin/admin-post.php" method="POST">
+    echo '<form action="../wp-admin/admin-post.php" method="POST" enctype="multipart/form-data">
     		<input type="hidden" name="action" value="insert_attack">
             <div id="attack">
                 Name:*<br>
@@ -439,6 +456,10 @@ function showInstructions(){
                         <p>To:</p>
                         <p><strong>{{ f.file_path }}</strong></p>
                     </div>
+                    <div ng-show="a.hasSoftware">
+                        <p>You need to download this file.</p>
+                        <a href="../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
+                    </div>
                 </div>
                 <h2 ng-show="lin_attacks.length > 0">Linux attacks</h2>
                 <div ng-repeat="a in lin_attacks">
@@ -448,6 +469,10 @@ function showInstructions(){
                         <p><strong>{{ f.string }}</strong></p>
                         <p>To:</p>
                         <p><strong>{{ f.file_path }}</strong></p>
+                    </div>
+                    <div ng-show="a.hasSoftware">
+                        <p>You need to download this file.</p>
+                        <a href="../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
                     </div>
                 </div>
             </div>
@@ -465,7 +490,8 @@ function showInstructions(){
         $size = count($win_attacks);
         foreach ( $win_attacks as $r ) {
             $files = get_filesByAttackID($r->id);
-            echo '{name: "' . $r->name . '", files: [';
+            $hasSoftware = ($r->attack_action == "software" ? "true" : "false");
+            echo '{id: ' . $r->id .', name: "' . $r->name . '", hasSoftware: ' . $hasSoftware . ', files: [';
             $files_size = count($files);
             $j = 0;
             foreach ($files as $f) {
@@ -483,10 +509,12 @@ function showInstructions(){
         echo '];
                   $scope.lin_attacks = [
                 ';
+        $i = 0;
         $size = count($lin_attacks);
         foreach ( $lin_attacks as $r ) {
             $files = get_filesByAttackID($r->id);
-            echo '{name: "' . $r->name . '", files: [';
+            $hasSoftware = ($r->software == "software" ? "false" : "true");
+            echo '{id: ' . $r->id .', name: "' . $r->name . '", hasSoftware: ' . $hasSoftware . ', files: [';
             $files_size = count($files);
             $j = 0;
             foreach ($files as $f) {
