@@ -3,7 +3,7 @@
 /*
 	AS -> AttackSimulator
 */
-
+require_once("ConnectSSH.php");
 
 global $jsonDATA;
 const INVALID_ARGUMENTS = "Invalid request arguments.";
@@ -11,6 +11,7 @@ const MISSING_ARGUMENTS = "Request arguments missing.";
 const REQUEST_GENERAL_ERROR = "Error during the request.";
 const LINUX_BREAK = "\n";
 const WINDOWS_BREAK = "\r\n";
+const DOWNLOAD_FILE_FULL_LINK = "http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=";
 
 
 function hooks(){
@@ -22,20 +23,45 @@ function hooks(){
  * TODO
  * @return answer for the client.
  */
-function remotely(){
+function remotely(){ //TODO TEST IT IN LINUX
     $jsonString = get_attacksRequested();
     if( $jsonString == null)
         wp_send_json_error(REQUEST_GENERAL_ERROR);
     $json['attacks'] = json_decode($jsonString);
     $json['ip'] = check_getParameterOrSendErrorMSG('ip');
-    $json['username'] = check_getParameterOrSendErrorMSG('username'); //TODO Perguntar se proteje contra caso o cliente tente colocar o username e password deste servidor.
+    $json['username'] = check_getParameterOrSendErrorMSG('username');
     $json['password'] = check_getParameterOrSendErrorMSG('password');
 
+    $con = new ConnectSSH($json['ip'], $json['username'], $json['password']); //TODO PERGUNTAR STOR SE Não tem que ter timeout.
+    try{
+        if(!$con->connect())
+            wp_send_json_error($con->get_error_msg());
 
-//wp_send_json_success("IP: " . $json['ip'] . " USERNAME: " . $json['username'] . " Password: " . $json['password']);
+        if(count($json['attacks']) == 0)
+            wp_send_json_error(INVALID_ARGUMENTS);
 
+        $attacks_cmd = null;
+        $download_files = null;
+        if(array_key_exists("windows", $json['attacks'])){
+            $attacks_cmd = $json['attacks']->{'windows'};
+        }
 
-    connectSsh($json['username'], 'sh ~/linux.sh', $json['ip']);
+        else if(array_key_exists("linux", $json['attacks'])){
+            $attacks_cmd .= $json['attacks']->{'linux'};
+        }
+
+        else wp_send_json_error(INVALID_ARGUMENTS);
+
+        if($attacks_cmd == null)
+            wp_send_json_error(INVALID_ARGUMENTS);
+
+        $data = $con->exec($attacks_cmd);
+        if($data == false)
+            wp_send_json_error($con->get_error_msg());
+        wp_send_json_success("Remote access finished with success!");
+    }catch(Exception $ex){
+        wp_send_json_error(REQUEST_GENERAL_ERROR);
+    }
 }
 /**
  * TODO
@@ -50,6 +76,20 @@ function get_downloadfile(){
 
 //--------------- AUXILIARY METHODS -------------------
 //
+
+/**
+ * @param $attacksID - Array of IDs of the attacks that we want to check if have any software associated.
+ * @return string|null - string with the commands needed to be executed to download the files or NULL if there are no attacks with software associated.
+ */
+function get_soft_command_for_download($attacksID, $LINK){
+    $soft_urls = null;
+    foreach($attacksID as $id){
+        $software = get_softFromAttackID($id);
+        if($software != null)
+            $soft_urls .= $LINK . $id . ";";
+    }
+    return $soft_urls;
+}
 
 function get_filesFromAttackID($ID)
 {
@@ -92,20 +132,6 @@ function get_safe_array($attacksID){
     }
     return $attacksID;
 }
-
-function connectSsh($username, $command, $ip){
-
-    // $execout=exec('ssh root@192.168.217.132 "/home/jails/jails-start-j2.sh" ',$output1,$result);
-    $execout=exec('ssh ' . $username .'@'.$ip.' "'.$command.'" ',$output1,$result);
-    if($execout !=0){
-        wp_send_json_success("SSH connection succeeded!");
-    }
-    else{
-        wp_send_json_error("SSH connection error. You must check if you have ssh connection enable.");
-    }
-
-    return $execout;
-}
 /**
  * The JSON created here it's the strings of the executable file.
  * @return JSON string on success OR false on failure
@@ -120,12 +146,16 @@ function get_attacksRequested(){
         $safe_attacksID = get_safe_array($attacksID);
         $win_attacks = get_windowsAttacksFromID($safe_attacksID);
         $jsonMESSAGE = [];
-        if(count($win_attacks) > 0)
+        if(count($win_attacks) > 0){
             $jsonMESSAGE['windows'] = get_windows_attack_text($win_attacks);
+            $jsonMESSAGE['win_attacks_id'] = $win_attacks;
+        }
 
         $lin_attacks = get_linuxAttacksFromID($safe_attacksID);
-        if(count($lin_attacks) > 0)
+        if(count($lin_attacks) > 0){
             $jsonMESSAGE['linux'] = get_linux_attack_text($lin_attacks);
+            $jsonMESSAGE['lin_attacks_id'] = $lin_attacks;
+        }
 
         return json_encode($jsonMESSAGE);
     }catch(Exception $ex){
@@ -237,27 +267,32 @@ function get_linux_soft_text($attack_id, $text){
     $software = get_softFromAttackID($attack_id);
     $length = count($software);
     if($length > 0){
-
+        $text .= "hasWget=$(which wget)" . LINUX_BREAK .
+                 "if [ -z \"\$hasWget\" ]; then" . LINUX_BREAK .
+                    "apt-get install wget" . LINUX_BREAK .
+                 "fi" . LINUX_BREAK; //TODO WGET DOESNT SUPPORT FEDORA LINUX.
         foreach($software as $s){
             $file_name = $s->file_name;
             $file_extension = pathinfo($file_name, PATHINFO_EXTENSION); //GET FILE EXTENSION
+
+            $text .= "wget -O \"" . $file_name . "\" \"" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "\"" . LINUX_BREAK; //TODO IT ONLY ACCEPTS A ATTACK TO HAVE ONE SOFTWARE ASSOCIATED.
             if($file_extension == "sh")
-                $text .= "sh ./" . $file_name;
+                $text .= "sh \"./" . $file_name . "\"";
             else if($file_extension == "deb")
-                $text .= "dpkg -i ./" . $file_name;
+                $text .= "dpkg -i \"./" . $file_name . "\"";
             else if(endsWith($file_name, ".tar.gz")){
-                $text .= "tar xvzf " . $file_name . LINUX_BREAK; //EXTRACT FROM PACKAGE
+                $text .= "tar xvzf \"" . $file_name . "\"" . LINUX_BREAK; //EXTRACT FROM PACKAGE
                 $text .= "./configure" . LINUX_BREAK; //CONFIGURE
                 $text .= "make" . LINUX_BREAK; //PREPARE
                 $text .= "make install"; //INSTALL
             }
             else if(endsWith($file_name, ".tar.bz2")){
-                $text .= "tar xvjf " . $file_name . LINUX_BREAK; //EXTRACT FROM PACKAGE
+                $text .= "tar xvjf \"" . $file_name . "\"" . LINUX_BREAK; //EXTRACT FROM PACKAGE
                 $text .= "./configure" . LINUX_BREAK; //CONFIGURE
                 $text .= "make" . LINUX_BREAK; //PREPARE
                 $text .= "make install"; //INSTALL
             }
-            else $text .= "xdg-open " . $file_name; //DEFAULT OPENNING PROGRAM. NOT SURE IF WORKS OK!!
+            else $text .= "xdg-open \"" . $file_name . "\""; //DEFAULT OPENNING PROGRAM. NOT SURE IF WORKS OK!!
             $length -= 1;
             if($length > 0)
                 $text .= LINUX_BREAK;
@@ -303,7 +338,7 @@ try{
     if(empty($jsonDATA))
         wp_send_json_error(MISSING_ARGUMENTS);
     hooks();
-}catch(Exeption $ex){
+}catch(Exception $ex){
     wp_send_json_error("Ocorreu um erro na transformação de parêmtros.");
 }
 

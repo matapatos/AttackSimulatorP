@@ -41,7 +41,8 @@ function showAttacks(){
     $i = 0;
     echo '<div ng-app="attacks">
 		<div ng-controller="AttacksController">
-			<form id="myForm" ng-submit="submit()" novalidate>
+			<form id="myForm" name="myForm" ng-submit="submit()" novalidate>
+				<div id="messages"></div>
 				<label>Search:
 					<input ng-model="search.$">
 				</label>
@@ -89,8 +90,8 @@ function showAttacks(){
 				<div id="configs" ng-show="isRemotely">
 					<h3>Configurations</h3>
 					<label>IP address:
-						<input id="ip" type="text" placeholder="IP address" ng-pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" required/>
-						<span class="required_field">*</span>
+						<input id="ip" type="text" placeholder="IP address" name="ip_address" ng-pattern="/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/" required/>
+						<span id="rf_ip" class="required_field">*</span>
 					</label>
 					<br/>
 					<label>Username:
@@ -104,11 +105,27 @@ function showAttacks(){
 					</label>
 				</div>
 				<input id="myAttacks" type="hidden" name="myAttacks"/>
-				<input type="submit" value="Submit" />
+				<input id="btnSubmit" type="submit" value="Submit" />
 			</form>
+			<div id="loader_panel">
+				<ul class="loader">
+					<li></li>
+					<li></li>
+					<li></li>
+				</ul>
+			</div>
 		</div>
 	</div>
 	<script type="text/javascript">
+		var ERROR_MULTIPLE_OS_SELECTED_REMOTELY = "You can\'t select attacks from different Operating Systems.",
+			INFO_REMOTELY_SELECTED = "You must have SSH installed in port 22 in your remotely machine to work successfully.",
+			WARN_ATTACK_FIELD_REQUIRED = "You must select at least one attack before submit.",
+			SUCCESS_OPERATION = "The operation was a success.";
+
+		var MSG_TYPES = {success: "success", error: "error", warn: "warning", info: "info"},
+			OS_TYPES = {windows: "windows", linux: "linux"},
+			GENE_TYPES = {remotely: "remotely", exe: "exe", instructions: ""};
+
 		var app = angular.module("attacks", []);
 		app.controller("AttacksController", ["$scope", "$http",
         function ($scope, $http) {
@@ -131,21 +148,36 @@ function showAttacks(){
 				$scope.numLinuxAttacks = 0;
 
 				$scope.submit = function () {
+					resetSpansMsg();
 					$scope.selectedAttacksID = getSelectedAttacksID();
 					if ($scope.selectedAttacksID.length > 0) { //Check if array it"s empty
-						if ($scope.geneType == "exe")
+						if ($scope.geneType == GENE_TYPES.exe)
 							downloadFile();
-						else if($scope.geneType == "remotely")
-							remotely();
+						else if($scope.geneType == GENE_TYPES.remotely){
+							var ipAddress = document.getElementById("ip").value;
+							if(!isValidIPAddress(ipAddress))
+								showSpanMsg("rf_ip", "* Invalid IP Address.");
+							else remotely();
+
+						}
 						else askForInstructions();
 					} else {
-						alert("You must select at least one attack before submit.");
+						showMsg(WARN_ATTACK_FIELD_REQUIRED, MSG_TYPES.warn);
 					}
 				};
 				$scope.checkIsRemotely = function () {
-					if ($scope.geneType == "remotely") {
+					enableSubmit();
+					disableMsg();
+					if ($scope.geneType == GENE_TYPES.remotely) {
 						$scope.isRemotely = true;
 						changeConfigsState(true);
+						if($scope.numWindowsAttacks > 0 && $scope.numLinuxAttacks > 0){
+							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.error);
+							disableSubmit();
+						}
+						else{
+							showMsg(INFO_REMOTELY_SELECTED, MSG_TYPES.info);
+						}
 					} else {
 						$scope.isRemotely = false;
 						//RESET FIELDS
@@ -154,19 +186,66 @@ function showAttacks(){
 					}
 				}
 				$scope.attackAddedOrRemoved = function (attack) {
-					if (attack.os.toLowerCase() == "windows") {
-						if (!attack.select) {
-							$scope.numWindowsAttacks += 1;
-						} else $scope.numWindowsAttacks -= 1;
+					enableSubmit();
+					disableMsg();
+					if (attack.os.toLowerCase() == OS_TYPES.windows) {
+						if (!attack.select)	$scope.numWindowsAttacks += 1;
+						else $scope.numWindowsAttacks -= 1;
 					} else { //LINUX
-						if (!attack.select) {
-							$scope.numLinuxAttacks += 1;
-						} else $scope.numLinuxAttacks -= 1;
+						if (!attack.select)	$scope.numLinuxAttacks += 1;
+						else $scope.numLinuxAttacks -= 1;
 					}
+					if($scope.isRemotely){
+						if($scope.numWindowsAttacks > 0 && $scope.numLinuxAttacks > 0){
+							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.error);
+							disableSubmit();
+						}
+						else{
+							showMsg(INFO_REMOTELY_SELECTED, MSG_TYPES.info);
+						}
+					}
+
 				};
 				//----------------- END SCOPE VARIABLES/FUNCTIONS ------------
 
 				//-------------------- AUXILIARY METHODS ----------------------
+				function resetSpansMsg(){
+					var span = document.getElementById("rf_ip");
+					span.innerHTML = "*";
+				}
+
+				function showSpanMsg(spanID, msg){
+					var span = document.getElementById(spanID);
+					span.innerHTML = msg;
+				}
+
+				function disableSubmit(){
+					changeSubmitState("none");
+				}
+
+				function enableSubmit(){
+					changeSubmitState("block");
+				}
+
+				function changeSubmitState(state){
+					var submit = document.getElementById("btnSubmit");
+					submit.style.display = state;
+				}
+
+				function showMsg(msg, msg_type){
+					changeMsgState(msg, "block", msg_type);
+				}
+
+				function disableMsg(){
+					changeMsgState("", "none", "");
+				}
+
+				function changeMsgState(msg, visibility, newClass){
+						var msg_div = document.getElementById("messages");
+						msg_div.innerHTML = msg;
+						msg_div.className = newClass;
+						msg_div.style.display = visibility;
+				}
 
 				function getSelectedAttacksID() {
 					var attacksID = [];
@@ -216,7 +295,13 @@ function showAttacks(){
 					};
 
 					sendPostRequest(data, callback, "downloadFile");
-					downloadSoftwareAttacks();
+					//downloadSoftwareAttacks();
+				}
+
+				function setLoading(bool){
+					var loader = document.getElementById("loader_panel");
+				    if(bool) loader.style.display = "block";
+				    else loader.style.display = "none";
 				}
 
 				function remotely() {
@@ -224,7 +309,8 @@ function showAttacks(){
 						user = document.getElementById("username").value,
 						pass = document.getElementById("password").value;
 					var callback = function (recData) {
-						alert(recData);
+						showMsg(recData, MSG_TYPES.success);
+						alert("DATA: " + recData);
 					};
 					var data = {
 						"attacks" : $scope.selectedAttacksID,
@@ -240,6 +326,7 @@ function showAttacks(){
 				}
 
 				function sendPostRequest(obj, callback, r_action) {
+				    setLoading(true);
 					$http({
 						method: "POST",
 						url:  "../wp-admin/admin-ajax.php",
@@ -249,14 +336,16 @@ function showAttacks(){
 						}
 					}).
 					success( function( data, status, headers, config ) {
+						setLoading(false);
 						if(data.success)
 							callback(data.data);
-						else alert("Ocorreu um erro. Erro: " + data + " Status: " + status);
+						else alert("Ocorreu um erro. Erro: " + data.data);
 					}).
 					error(function(data, status, headers, config) {
-						alert("An error ocourrs during the send process. Try more later.");
+						setLoading(false);
+						alert("An error ocourrs during the remotely process. Make sure that all your data its correct!");
 					});
-					
+
 				}
 
 				function resetConfigs() {
@@ -274,9 +363,28 @@ function showAttacks(){
 					})[0];
 				}
 
+				//It checks if it\'s IPv4 or IPv6 IP Address.
+				function isValidIPAddress(ip) {
+					var valid = isIPv4(ip);
+					if (valid)
+                        return true;
+					return isIPv6(ip);
+				}
+
+				//WARN IPs por exemplo: 125.23.32 são ips válidos?
+				function isIPv4(ip) {
+                    var regEx = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+                    return ip.match(regEx);
+                }
+
+				function isIPv6(ip) {
+                    var regEx = "^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$";
+                    return ip.match(regEx);
+                }
+
 				//-------------------- END AUXILIARY METHODS -------------------
         }]);
-	</script>';
+</script>';
 }
 
 //TODO VER BUG DO CHOOSE FILE. NÃO SELECIONA BEM. PRINCIPALMENTE NO INICIO.
