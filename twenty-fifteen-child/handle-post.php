@@ -11,6 +11,15 @@ add_action('admin_post_insert_attack','insert_attack');
 function haveField($p1){
     return isset($_POST[$p1]);
 }
+
+function get_bin_data($file_name, $file_content){
+    $extension = pathinfo($file_name, PATHINFO_EXTENSION);
+    if($extension == "exe" || $extension == "msi"){
+        
+    }
+    return $file_content;
+}
+
 function insert_attack() {
     $message="";
     if(!haveField("name")){
@@ -50,10 +59,10 @@ function insert_attack() {
             $id = $GLOBALS['wpdb']->insert_id;
             $file_type = mysql_real_escape_string($_FILES["soft"]["type"]);
             $file_name = mysql_real_escape_string($_FILES["soft"]["name"]);
-            $file_bin_data = addslashes(file_get_contents($_FILES["soft"]["tmp_name"]));
+            $file_bin_data = get_bin_data($file_name , addslashes(file_get_contents($_FILES["soft"]["tmp_name"])));
             $file_size = strlen($file_bin_data);
             if($file_size > 8388608)
-                throw new Exception("File too large. It must have at maximum 8388608 bytes but it has " . $file_name . " bytes.");
+                throw new Exception("File too large. It must have at maximum 8388608 bytes but it has " . $file_size . " bytes.");
 
             $result = $GLOBALS['wpdb']->insert(
                 'software',
