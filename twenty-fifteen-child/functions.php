@@ -540,8 +540,8 @@ function addAttacks() {
 
                 if(file != null){
                     var size = software.files[0].size;
-                    if(size > 8388608){
-                        showSpanMsg("software_span", "*File too large. The max size is 8388608 bytes.");
+                    if(size > 104857600){
+                        showSpanMsg("software_span", "*File too large. The max size is 104857600B/100M.");
                         disableSubmit();
                     }
                 }
