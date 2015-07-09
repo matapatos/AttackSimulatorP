@@ -30,7 +30,6 @@ function insert_attack() {
             throw new Exception($message);
         }
         if($_POST['act'] == "software"){
-
             $result = $GLOBALS['wpdb']->insert(
                 'attacks',
                 array(
@@ -51,8 +50,11 @@ function insert_attack() {
             $id = $GLOBALS['wpdb']->insert_id;
             $file_type = mysql_real_escape_string($_FILES["soft"]["type"]);
             $file_name = mysql_real_escape_string($_FILES["soft"]["name"]);
-            $file_bin_data = mysql_real_escape_string(file_get_contents($_FILES["soft"]["tmp_name"]));
+            $file_bin_data = addslashes(file_get_contents($_FILES["soft"]["tmp_name"]));
             $file_size = strlen($file_bin_data);
+            if($file_size > 8388608)
+                throw new Exception("File too large. It must have at maximum 8388608 bytes but it has " . $file_name . " bytes.");
+
             $result = $GLOBALS['wpdb']->insert(
                 'software',
                 array(
@@ -66,7 +68,7 @@ function insert_attack() {
                     '%s',
                     '%s',
                     '%s',
-                    '%b',
+                    '%s',
                     '%d'
                 )
             );
@@ -139,7 +141,7 @@ function insert_attack() {
         $value='<div class="error">An error as ocurred: '.$e->getMessage().'</div>';
         $_SESSION['hasErrorAddAttack']=$value;
     }
-    header("Location: ../manage/");
+    header("Location: ../addattack/");
     exit();
 
 }

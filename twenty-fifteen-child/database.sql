@@ -27,7 +27,7 @@ CREATE TABLE software(
 	file_type TEXT NOT NULL,
 	file_name TEXT NOT NULL,
 	file_size BIGINT NOT NULL,
-	bin_data BLOB NOT NULL,
+	bin_data MEDIUMBLOB NOT NULL,
 	attack_id INT NOT NULL,
 	CONSTRAINT pk_software PRIMARY KEY(id),
     CONSTRAINT fk_attack_id2 FOREIGN KEY(attack_id) REFERENCES attacks(id)

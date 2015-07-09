@@ -200,7 +200,9 @@ function get_windows_soft_text($attack_id, $text){
     $length = count($software);
     if($length > 0){
         foreach($software as $s){
-            $text .= "CALL " . $s->file_name;
+            //bitsadmin /transfer AttackSimulator http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=22 "%cd%\first.sh"
+            $text .= "bitsadmin /transfer AttackSimulator \"" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "\" \"%cd%\\" . $s->file_name . "\"" . WINDOWS_BREAK;
+            $text .= "CALL \"" . $s->file_name . "\"";
             $length -= 1;
             if($length > 0)
                 $text .= WINDOWS_BREAK;

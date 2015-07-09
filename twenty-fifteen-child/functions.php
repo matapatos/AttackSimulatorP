@@ -266,19 +266,9 @@ function showAttacks(){
 					attacksElem.value = $scope.selectedAttacksID;
 
 					var form = document.getElementById("myForm");
-						form.setAttribute("action", "instructions");
+						form.setAttribute("action", "../instructions");
 						form.setAttribute("method", "post");
 						form.submit();
-				}
-
-				function downloadSoftwareAttacks(){
-					for(var i = 0; i < $scope.selectedAttacksWithSoftware.length; i++){
-						id = $scope.selectedAttacksWithSoftware[i];
-						var link = document.createElement("a");
-						link.setAttribute("href", "../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=" + id);
-						link.setAttribute("download", "");
-						link.click();
-					}
 				}
 
 				function downloadFile() {
@@ -295,7 +285,6 @@ function showAttacks(){
 					};
 
 					sendPostRequest(data, callback, "downloadFile");
-					//downloadSoftwareAttacks();
 				}
 
 				function setLoading(bool){
@@ -398,18 +387,24 @@ function addAttacks() {
 		unset($_SESSION['hasErrorAddAttack']);
 	}
     echo '<form action="../wp-admin/admin-post.php" method="POST" enctype="multipart/form-data">
-    		<input type="hidden" name="action" value="insert_attack">
+            <input type="hidden" name="action" value="insert_attack">
             <div id="attack">
-                Name:*<br>
+                Name:<br/>
                 <input type="text" name="name" required>
-                <br>
-                Description:*<br>
+                <br/>
+                <span class="required_field">*</span>
+                <br/>
+                Description:<br/>
                 <input type="text" name="desc" required>
+                <span class="required_field">*</span>
+                <br/>
                 <fieldset >
-                    <legend>Operative system:*</legend>
-                    <input type="radio" name="so" value="windows" required>Windows<br>
-                    <input type="radio" name="so" value="linux">Linux<br>
-                </fieldset><br>
+                    <legend>Operative system:</legend>
+                    <input type="radio" name="so" value="windows" required>Windows<br/>
+                    <input type="radio" name="so" value="linux">Linux<br/>
+                </fieldset>
+                <span class="required_field">*</span>
+                <br/>
                 Action:
                 <select id="select_action" name="act" onchange="onSelectChange(this)">
                   <option value="file">File</option>
@@ -419,27 +414,33 @@ function addAttacks() {
             </div>
             <div id="field_soft">
                 Software:
-                <input type="file" name="soft" id="software">
-                <br>
+                <input type="file" name="soft" id="software" onchange="checkFileSize()">
+                <br/>
+                <span id="software_span" class="required_field">*</span>
+                <br/>
             </div>
             <fieldset id="field_files">
                 <legend>Files</legend>
                 <div id="files">
                     <div id="file0">
-                        File path:<br>
+                        File path:<br/>
                         <input type="text" id="fp0" name="file_path0">
-                        <br>
-                        String:<br>
+                        <br/>
+                        <span class="required_field">*</span>
+                        <br/>
+                        String:<br/>
                         <input type="text" id="s0" name="string0">
-                        <br><br>
+                        <br/>
+                        <span class="required_field">*</span>
+                        <br/><br/>
                     </div>
                 </div>
-                <button id="addfiles" type="button" onclick="addFile()" style="float: right;">Add file</button><br>
+                <button id="addfiles" type="button" onclick="addFile()" style="float: right;">Add file</button><br/>
             </fieldset>
             <input type="hidden" id="nf" name="numberFile" value="0"/>
-            <br>
-            <input type="submit" value="Submit" style="float: right;">
-            <br>
+            <br/>
+            <input id="btnSubmit" type="submit" value="Submit" style="float: right;">
+            <br/>
         </form>
         <script>
 
@@ -459,6 +460,7 @@ function addAttacks() {
                     document.getElementById("software").required=false;
                     document.getElementById("field_soft").style.display="none";
                     document.getElementById("field_files").style.display="block";
+                    enableSubmit();
                 }else{
                     for(var i=0;i<fileNumber;i++){
                         if(document.getElementById("fp"+i)!=null){
@@ -469,12 +471,13 @@ function addAttacks() {
                     document.getElementById("field_soft").style.display="block";
                     document.getElementById("field_files").style.display="none";
                     document.getElementById("software").required=true;
+                    checkFileSize();
                 }
             }
             function addFile(){
                 var node = document.createElement("DIV");
-                node.id="file"+fileNumber;   
-                document.getElementById("files").appendChild(node);    
+                node.id="file"+fileNumber;
+                document.getElementById("files").appendChild(node);
                 addElement("SPAN","File path:");
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","File path:");
@@ -493,13 +496,13 @@ function addAttacks() {
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("BUTTON","Remove").id=fileNumber;
                 document.getElementById("nf").value=fileNumber;
-                
-                
-                fileNumber++; 
+
+
+                fileNumber++;
             }
             function addElement(p1,p2){
-                var node = document.createElement(p1);                
-                var textnode = document.createTextNode(p2);         
+                var node = document.createElement(p1);
+                var textnode = document.createTextNode(p2);
                 node.appendChild(textnode);
                 if(p1=="BUTTON"){
                     node.type="button";
@@ -514,6 +517,38 @@ function addAttacks() {
                 var id = p1.id;
                 var node = document.getElementById("file"+id);
                 document.getElementById("files").removeChild(node);
+            }
+            function showSpanMsg(spanID, msg){
+                var span = document.getElementById(spanID);
+                span.innerHTML = msg;
+            }
+            function changeSubmitState(state){
+                var submit = document.getElementById("btnSubmit");
+                submit.style.display = state;
+            }
+            function disableSubmit(){
+                changeSubmitState("none");
+            }
+            function enableSubmit(){
+                changeSubmitState("block");
+            }
+            function checkFileSize(){
+                enableSubmit();
+                showSpanMsg("software_span", "*");
+                var software = document.getElementById("software"),
+                    file = software.files[0];
+
+                if(file != null){
+                    var size = software.files[0].size;
+                    if(size > 8388608){
+                        showSpanMsg("software_span", "*File too large. The max size is 8388608 bytes.");
+                        disableSubmit();
+                    }
+                }
+                else{
+                    enableSubmit();
+                    showSpanMsg("software_span", "*");
+                }
             }
         </script>';
 }
@@ -566,7 +601,7 @@ function showInstructions(){
                     </div>
                     <div ng-show="a.hasSoftware">
                         <p>You need to download this file.</p>
-                        <a href="../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
+                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
                     </div>
                 </div>
                 <h2 ng-show="lin_attacks.length > 0">Linux attacks</h2>
@@ -580,7 +615,7 @@ function showInstructions(){
                     </div>
                     <div ng-show="a.hasSoftware">
                         <p>You need to download this file.</p>
-                        <a href="../wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
+                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
                     </div>
                 </div>
             </div>

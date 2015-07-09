@@ -6,6 +6,10 @@ Template:       twentyfifteen
 
 (optional values you can add: Theme URI, Author URI, Version, License, License URI, Tags, Text Domain)
 */
+.required_field{
+    color: red;
+}
+
 .info, .success, .warning, .error, .validation {
 border: 1px solid;
 margin: 10px 0px;

@@ -30,7 +30,7 @@ function download_software($attack_id){
         header("Content-Type: " . $file_type);
         header("Content-Length: " . $file_size);
         header("Content-Disposition: attachment; filename=" . $file_name);
-        echo $content;
+        echo stripslashes($content);
 
     }catch (Exception $ex){
         die($ex->getMessage());
@@ -43,6 +43,7 @@ if(is_user_logged_in()){
         die(MISSING_ARGUMENTS);
     $attack_id = mysql_real_escape_string($attack_id);
     download_software($attack_id);
+    exit();
 }
 else die("0");
 
