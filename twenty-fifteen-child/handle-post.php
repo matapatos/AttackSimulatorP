@@ -60,7 +60,7 @@ function insert_attack() {
                 array(
                     'name' => $_POST['name'],
                     'description' => $_POST['desc'],
-                    'so' => $_POST['so'],
+                    'os' => $_POST['so'],
                     'attack_action' => $_POST['act']
                 ),
                 array(
@@ -93,7 +93,6 @@ function insert_attack() {
                 )
             );
             if($result == false || $result == 0){
-                $GLOBALS['wpdb']->show_errors();
                 $messsage=$GLOBALS['wpdb']->show_errors();
                 $GLOBALS['wpdb']->delete('attacks', array('id' => $id));
                 throw new Exception("An error occours when trying to insert the software.".$message);
@@ -114,7 +113,7 @@ function insert_attack() {
                 array(
                     'name' => $_POST['name'],
                     'description' => $_POST['desc'],
-                    'so' => $_POST['so'],
+                    'os' => $_POST['so'],
                     'attack_action' => $_POST['act'],
                 ),
                 array(

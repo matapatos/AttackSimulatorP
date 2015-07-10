@@ -106,13 +106,13 @@ function get_softFromAttackID($ID)
 function get_linuxAttacksFromID($attacksID)
 {
     global $wpdb;
-    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='linux'", OBJECT);
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(os)='linux'", OBJECT);
 }
 
 function get_windowsAttacksFromID($attacksID)
 {
     global $wpdb;
-    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='windows'", OBJECT);
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(os)='windows'", OBJECT);
 }
 
 function remove_slashes($string){

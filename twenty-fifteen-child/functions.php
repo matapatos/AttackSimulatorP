@@ -134,7 +134,7 @@ function showAttacks(){
             ';
     foreach ( $allAttacks as $r ) {
         $hasSoftware = ($r->attack_action == "software" ? "true" : "false");
-        echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->so . '", select: false, id: ' . $r->id . ', hasSoftware: ' . $hasSoftware . '}';
+        echo '{name: "' . $r->name . '", description: "' . $r->description . '", os: "' . $r->os . '", select: false, id: ' . $r->id . ', hasSoftware: ' . $hasSoftware . '}';
         $i+=1;
         if($i < $size)
             echo ',';
@@ -383,7 +383,7 @@ function addAttacks() {
 		unset($_SESSION['hasAddAttack']);
 	}
 	if(isset($_SESSION['hasErrorAddAttack'])){
-		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].'</div>';
+		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].$GLOBALS['wpdb']->print_error().'</div>';
 		unset($_SESSION['hasErrorAddAttack']);
 	}
     echo '<form action="../wp-admin/admin-post.php" method="POST" enctype="multipart/form-data">
@@ -564,13 +564,13 @@ function get_filesByAttackID($ID)
 function get_linuxAttacksByID($attacksID)
 {
     global $wpdb;
-    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='linux'", OBJECT);
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(os)='linux'", OBJECT);
 }
 
 function get_windowsAttacksByID($attacksID)
 {
     global $wpdb;
-    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(so)='windows'", OBJECT);
+    return $wpdb->get_results("SELECT * FROM attacks WHERE id IN (" . implode(",", $attacksID) . ") AND LCASE(os)='windows'", OBJECT);
 }
 
 //---------------------------- END AUXILIARY METHODS ----------------------
