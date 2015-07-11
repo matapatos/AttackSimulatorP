@@ -27,9 +27,20 @@ function download_software($attack_id){
         $file_name = $software->file_name;
         $file_size = $software->file_size;
         $content = $software->bin_data;
-        header("Content-Type: " . $file_type);
+        header('Content-Description: File Transfer');
+        header("Content-Type: application/force_download");
+        header('Content-Disposition: attachment; filename="' . $file_name . '"');
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header("Pragma: ");
+        header("Cache-Control: ");
+        header('Content-Length:' . $file_size);
+        ob_clean();
+        flush();
+        // Send Headers
+        /*header("Content-Type: " . $file_type);
         header("Content-Length: " . $file_size);
-        header("Content-Disposition: attachment; filename=" . $file_name);
+        header('Content-Disposition: attachment; filename="' . $file_name . '"');*/
         echo stripslashes($content);
 
     }catch (Exception $ex){
@@ -37,15 +48,15 @@ function download_software($attack_id){
     }
 }
 
-if(is_user_logged_in()){
+//if(!is_user_logged_in()){
     $attack_id = $_GET['attack_id'];
     if(empty($attack_id))
         die(MISSING_ARGUMENTS);
     $attack_id = mysql_real_escape_string($attack_id);
     download_software($attack_id);
     exit();
-}
-else die("0");
+//}
+//else die("0");
 
 
 

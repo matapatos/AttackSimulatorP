@@ -383,27 +383,26 @@ function addAttacks() {
 		unset($_SESSION['hasAddAttack']);
 	}
 	if(isset($_SESSION['hasErrorAddAttack'])){
-		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].$GLOBALS['wpdb']->print_error().'</div>';
+		echo '<div id="usp-success-message">'.$_SESSION['hasErrorAddAttack'].'</div>';
 		unset($_SESSION['hasErrorAddAttack']);
 	}
     echo '<form action="../wp-admin/admin-post.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="insert_attack">
             <div id="attack">
-                Name:<br/>
+                Name:<span class="required_field">*</span><br/>
                 <input type="text" name="name" required>
                 <br/>
-                <span class="required_field">*</span>
                 <br/>
-                Description:<br/>
+                Description:<span class="required_field">*</span><br/>
                 <input type="text" name="desc" required>
-                <span class="required_field">*</span>
+
                 <br/>
                 <fieldset >
-                    <legend>Operative system:</legend>
+                    <legend>Operative system:<span class="required_field">*</span></legend>
                     <input type="radio" name="so" value="windows" required>Windows<br/>
                     <input type="radio" name="so" value="linux">Linux<br/>
                 </fieldset>
-                <span class="required_field">*</span>
+
                 <br/>
                 Action:
                 <select id="select_action" name="act" onchange="onSelectChange(this)">
@@ -413,25 +412,25 @@ function addAttacks() {
                 <br><br>
             </div>
             <div id="field_soft">
-                Software:
+                Software:<span id="software_span" class="required_field">*</span>
                 <input type="file" name="soft" id="software" onchange="checkFileSize()">
                 <br/>
-                <span id="software_span" class="required_field">*</span>
+
                 <br/>
             </div>
             <fieldset id="field_files">
                 <legend>Files</legend>
                 <div id="files">
                     <div id="file0">
-                        File path:<br/>
+                        File path:<span class="required_field">*</span><br/>
                         <input type="text" id="fp0" name="file_path0">
-                        <br/>
-                        <span class="required_field">*</span>
-                        <br/>
-                        String:<br/>
+                        String:<span class="required_field">*</span><br/>
                         <input type="text" id="s0" name="string0">
+                        Quantity:<br>
+                        <input type="number" id="q0" name="quant0" min="1" value="1">
                         <br/>
-                        <span class="required_field">*</span>
+
+
                         <br/><br/>
                     </div>
                 </div>
@@ -479,6 +478,8 @@ function addAttacks() {
                 node.id="file"+fileNumber;
                 document.getElementById("files").appendChild(node);
                 addElement("SPAN","File path:");
+                node = addElement("SPAN","*");
+                node.className="required_field";
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","File path:");
                 node.id="fp"+fileNumber;
@@ -487,12 +488,21 @@ function addAttacks() {
                 node.required=true;
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("SPAN","String:");
+                node = addElement("SPAN","*");
+                node.className="required_field";
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 node = addElement("INPUT","String:");
                 node.id="s"+fileNumber;
                 node.name="string"+fileNumber;
                 node.type = "text";
                 node.required=true;
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                addElement("SPAN","Quantity:");
+                document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
+                node = addElement("INPUT","Quantity:");
+                node.type="number";
+                node.value=1;
+                node.min=1;
                 document.getElementById("file"+fileNumber).appendChild(document.createElement("BR"));
                 addElement("BUTTON","Remove").id=fileNumber;
                 document.getElementById("nf").value=fileNumber;

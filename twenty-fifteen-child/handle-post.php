@@ -40,21 +40,22 @@ function insert_attack() {
         $message.="You need to insert the operative system<br>";
     }
     if(!haveField("act")){
-        $message.="You need to insert the attack action<br>";
+        "You need to insert the attack action<br>";
+    }
+    if($GLOBALS['wpdb']->get_row('SELECT * FROM attacks WHERE name ="'.$_POST["name"].'"')!=null){
+        $message.="Already exists a attack with that name, please select another name!";
     }
     try{
         if($message!=""){
             throw new Exception($message);
         }
-        
-        $file_type = mysql_real_escape_string($_FILES["soft"]["type"]);
-        $file_name = mysql_real_escape_string($_FILES["soft"]["name"]);
-        $file_bin_data = addslashes(file_get_contents($_FILES["soft"]["tmp_name"]));
-        $file_size = $_FILES["soft"]["size"];
-        if($file_size > 104857600 || $file_size<=0)
-            throw new Exception("File too large. It must have at maximum 104857600B/100M but it has " . $file_size . " bytes.");
-        
         if($_POST['act'] == "software"){
+            $file_type = mysql_real_escape_string($_FILES["soft"]["type"]);
+            $file_name = mysql_real_escape_string($_FILES["soft"]["name"]);
+            $file_bin_data = addslashes(file_get_contents($_FILES["soft"]["tmp_name"]));
+            $file_size = $_FILES["soft"]["size"];
+            if($file_size > 104857600 || $file_size<=0)
+                throw new Exception("File too large. It must have at maximum 104857600B/100M but it has " . $file_size . " bytes.");
             $result = $GLOBALS['wpdb']->insert(
                 'attacks',
                 array(
@@ -108,6 +109,7 @@ function insert_attack() {
                     }
                 }
             }
+
             $result = $GLOBALS['wpdb']->insert(
                 'attacks',
                 array(
@@ -127,18 +129,23 @@ function insert_attack() {
                 throw new Exception("An error occours when trying to insert the attack.");
 
             $id=$GLOBALS['wpdb']->insert_id;
+            
             if(!isset($_POST['numberFile']) || $numberFile<0){
+                $GLOBALS['wpdb']->delete( 'attacks', array( 'id' => $id ) );
                 throw new Exception("An system error as ocurred<br>");
             }
-            $hadError = false;
+            $quantity=1;
             for($i=0;$i<$numberFile;$i++){
                 if(isset($_POST['file_path'.$i])){
+                    if(isset($_POST['quant'.$i]) && is_numeric($_POST['quant'.$i]) && $_POST['quant'.$i]>0 && $_POST['quant'.$i]<PHP_INT_MAX ){
+                        $quantity=$_POST['quant'.$i];
+                    }
                     $result = $GLOBALS['wpdb']->insert(
                         'files',
                         array(
                             'file_path' => $_POST['file_path'.$i],
                             'string' => $_POST['string'.$i],
-                            'quantity' => 1, //TODO CRIAR CAMPO DE QUANTIDADE NA PARTE DO FORM DO CLIENTE
+                            'quantity' => $quantity,
                             'attack_id' => $id
                         ),
                         array(
@@ -148,15 +155,14 @@ function insert_attack() {
                             '%d'
                         )
                     );
-                    if($result == false || $result == 0)
-                        $hadError = true;
+                    
+                    if($result == false || $result == 0){
+                        $GLOBALS['wpdb']->delete( 'files', array( 'attack_id' => $id ) );
+                        $GLOBALS['wpdb']->delete( 'attacks', array( 'id' => $id ) );
+                        throw new Exception("An error occours when trying to insert the file(s).".$GLOBALS['wpdb']->last_error);
+                    }
+                    
                 }
-            }
-
-            if($hadError){
-                $GLOBALS['wpdb']->delete( 'attacks', array( 'id' => $id ) );
-                throw new Exception("An error occours when trying to insert the file(s).".$GLOBALS['wpdb']->last_error);
-                
             }
         }
 
