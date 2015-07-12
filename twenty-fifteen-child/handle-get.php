@@ -27,20 +27,11 @@ function download_software($attack_id){
         $file_name = $software->file_name;
         $file_size = $software->file_size;
         $content = $software->bin_data;
-        header('Content-Description: File Transfer');
-        header("Content-Type: application/force_download");
-        header('Content-Disposition: attachment; filename="' . $file_name . '"');
-        header('Content-Transfer-Encoding: binary');
-        header('Expires: 0');
-        header("Pragma: ");
-        header("Cache-Control: ");
+        header("Content-Type: " . $file_type);
+        header("Accept-Ranges: bytes");
         header('Content-Length:' . $file_size);
-        ob_clean();
-        flush();
-        // Send Headers
-        /*header("Content-Type: " . $file_type);
-        header("Content-Length: " . $file_size);
-        header('Content-Disposition: attachment; filename="' . $file_name . '"');*/
+        header('Connection: keep-alive');
+        header('Content-Disposition: attachment; filename="' . $file_name . '"');
         echo stripslashes($content);
 
     }catch (Exception $ex){

@@ -172,7 +172,7 @@ function showAttacks(){
 						$scope.isRemotely = true;
 						changeConfigsState(true);
 						if($scope.numWindowsAttacks > 0 && $scope.numLinuxAttacks > 0){
-							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.error);
+							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.warn);
 							disableSubmit();
 						}
 						else{
@@ -197,14 +197,13 @@ function showAttacks(){
 					}
 					if($scope.isRemotely){
 						if($scope.numWindowsAttacks > 0 && $scope.numLinuxAttacks > 0){
-							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.error);
+							showMsg(ERROR_MULTIPLE_OS_SELECTED_REMOTELY, MSG_TYPES.warn);
 							disableSubmit();
 						}
 						else{
 							showMsg(INFO_REMOTELY_SELECTED, MSG_TYPES.info);
 						}
 					}
-
 				};
 				//----------------- END SCOPE VARIABLES/FUNCTIONS ------------
 
@@ -220,16 +219,16 @@ function showAttacks(){
 				}
 
 				function disableSubmit(){
-					changeSubmitState("none");
+					changeSubmitState(true);
 				}
 
 				function enableSubmit(){
-					changeSubmitState("block");
+					changeSubmitState(false);
 				}
 
 				function changeSubmitState(state){
 					var submit = document.getElementById("btnSubmit");
-					submit.style.display = state;
+					submit.disabled = state;
 				}
 
 				function showMsg(msg, msg_type){
@@ -277,9 +276,9 @@ function showAttacks(){
 					};
 					var callback = function (recData) {
 						var json = JSON.parse(recData);
-						if ($scope.numLinuxAttacks > 0)
+						if (json.hasOwnProperty("linux"))
 							getLinkFilename(json["linux"], "linux.sh").click();
-						if ($scope.numWindowsAttacks > 0)
+						if (json.hasOwnProperty("windows"))
 							getLinkFilename(json["windows"], "windows.bat").click();
 						alert("Don \'t forget to execute the executable files in root/admin mode.");
 					};
@@ -606,12 +605,12 @@ function showInstructions(){
                     <div ng-repeat="f in a.files">
                         <p>Copy this text:</p>
                         <p><strong>{{ f.string }}</strong></p>
-                        <p>To:</p>
+                        <p>To this file:</p>
                         <p><strong>{{ f.file_path }}</strong></p>
                     </div>
                     <div ng-show="a.hasSoftware">
-                        <p>You need to download this file.</p>
-                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
+                        <p>Download this file and install it in your machine:</p>
+                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Download</a>
                     </div>
                 </div>
                 <h2 ng-show="lin_attacks.length > 0">Linux attacks</h2>
@@ -620,12 +619,12 @@ function showInstructions(){
                     <div ng-repeat="f in a.files">
                         <p>Copy this text:</p>
                         <p><strong>{{ f.string }}</strong></p>
-                        <p>To:</p>
+                        <p>To this file:</p>
                         <p><strong>{{ f.file_path }}</strong></p>
                     </div>
                     <div ng-show="a.hasSoftware">
-                        <p>You need to download this file.</p>
-                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Software</a>
+                        <p>Download this file and install it in your machine:</p>
+                        <a href="./wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id={{ a.id }}" download>Download</a>
                     </div>
                 </div>
             </div>
@@ -666,7 +665,7 @@ function showInstructions(){
         $size = count($lin_attacks);
         foreach ( $lin_attacks as $r ) {
             $files = get_filesByAttackID($r->id);
-            $hasSoftware = ($r->software == "software" ? "false" : "true");
+            $hasSoftware = ($r->attack_action == "software" ? "true" : "false");
             echo '{id: ' . $r->id .', name: "' . $r->name . '", hasSoftware: ' . $hasSoftware . ', files: [';
             $files_size = count($files);
             $j = 0;

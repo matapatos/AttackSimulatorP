@@ -49,7 +49,7 @@ class ConnectSSH {
     }
 
     public function get_error_msg(){
-        return $this->error_msg;
+        return "" . $this->error_msg;
     }
 
     public function disconnect(){

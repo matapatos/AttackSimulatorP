@@ -12,21 +12,6 @@ function haveField($p1){
     return isset($_POST[$p1]);
 }
 
-function get_bin_data($file_name, $file_content){
-    $extension = pathinfo($file_name, PATHINFO_EXTENSION); //GET EXTENSION FROM FILE NAME
-    if($extension == "exe" || $extension == "msi"){
-        $zip = new ZipArchive();
-        $filename = "test.zip";
-
-        if ($zip->open($filename, ZIPARCHIVE::CREATE)!==TRUE) {
-            exit("cannot open <$filename>\n");
-        }
-        $zip->addFromString($file_name, $file_content);
-        $zip->close();
-        return file_get_contents($zip);
-    }
-    return $file_content;
-}
 
 function insert_attack() {
     $message="";
@@ -55,7 +40,7 @@ function insert_attack() {
             $file_bin_data = addslashes(file_get_contents($_FILES["soft"]["tmp_name"]));
             $file_size = $_FILES["soft"]["size"];
             if($file_size > 104857600 || $file_size<=0)
-                throw new Exception("File too large. It must have at maximum 104857600B/100M but it has " . $file_size . " bytes.");
+                throw new Exception("File too large. It must have at maximum 104857600B/100MB but it has " . $file_size . " bytes.");
             $result = $GLOBALS['wpdb']->insert(
                 'attacks',
                 array(
@@ -75,7 +60,7 @@ function insert_attack() {
                 throw new Exception("An error occours when trying to insert the attack.");
             
             $id = $GLOBALS['wpdb']->insert_id;
-            
+
             $result = $GLOBALS['wpdb']->insert(
                 'software',
                 array(
