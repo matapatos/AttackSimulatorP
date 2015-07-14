@@ -15,7 +15,7 @@ CREATE TABLE attacks(
 CREATE TABLE files(
 	id INT AUTO_INCREMENT,
 	file_path VARCHAR(255) NOT NULL,
-	string TEXT NOT NULL,
+	string LONGTEXT NOT NULL,
 	quantity INT NOT NULL,
 	attack_id INT NOT NULL,
 	CONSTRAINT pk_files PRIMARY KEY(id),
