@@ -71,6 +71,9 @@ function showAttacks(){
 					</select>
 				</label>
 				<br/>
+				<label>Select all:
+					<input type="checkbox" ng-model="selectAllAttacks" ng-change="selectAll()" />
+				</label>
 				<table>
 					<tr>
 						<td>Name</td>
@@ -83,7 +86,7 @@ function showAttacks(){
 						<td>{{ a.description }}</td>
 						<td>{{ a.os }}</td>
 						<td>
-							<input type="checkbox" ng-model="a.select" ng-change="attackAddedOrRemoved({{a}})"/>
+							<input type="checkbox" ng-model="a.select" ng-change="attackAddedOrRemoved({{a}})" />
 						</td>
 					</tr>
 				</table>
@@ -104,7 +107,7 @@ function showAttacks(){
 						<span class="required_field">*</span>
 					</label>
 				</div>
-				<input id="myAttacks" type="hidden" name="myAttacks"/>
+				<input id="myAttacks" type="hidden" name="myAttacks" />
 				<input id="btnSubmit" type="submit" value="Submit" />
 			</form>
 			<div id="loader_panel">
@@ -122,9 +125,21 @@ function showAttacks(){
 			WARN_ATTACK_FIELD_REQUIRED = "You must select at least one attack before submit.",
 			SUCCESS_OPERATION = "The operation was a success.";
 
-		var MSG_TYPES = {success: "success", error: "error", warn: "warning", info: "info"},
-			OS_TYPES = {windows: "windows", linux: "linux"},
-			GENE_TYPES = {remotely: "remotely", exe: "exe", instructions: ""};
+		var MSG_TYPES = {
+				success: "success",
+				error: "error",
+				warn: "warning",
+				info: "info"
+			},
+			OS_TYPES = {
+				windows: "windows",
+				linux: "linux"
+			},
+			GENE_TYPES = {
+				remotely: "remotely",
+				exe: "exe",
+				instructions: ""
+			};
 
 		var app = angular.module("attacks", []);
 		app.controller("AttacksController", ["$scope", "$http",
@@ -146,6 +161,7 @@ function showAttacks(){
 				$scope.selectedAttacksWithSoftware = [];
 				$scope.numWindowsAttacks = 0;
 				$scope.numLinuxAttacks = 0;
+				$scope.selectAllAttacks = false;
 
 				$scope.submit = function () {
 					resetSpansMsg();
@@ -205,54 +221,60 @@ function showAttacks(){
 						}
 					}
 				};
+				$scope.selectAll = function () {
+					var bool = $scope.selectAllAttacks;
+					angular.forEach($scope.attacks, function (a) {
+						a.select = bool;
+					});
+				};
 				//----------------- END SCOPE VARIABLES/FUNCTIONS ------------
 
 				//-------------------- AUXILIARY METHODS ----------------------
-				function resetSpansMsg(){
+				function resetSpansMsg() {
 					var span = document.getElementById("rf_ip");
 					span.innerHTML = "*";
 				}
 
-				function showSpanMsg(spanID, msg){
+				function showSpanMsg(spanID, msg) {
 					var span = document.getElementById(spanID);
 					span.innerHTML = msg;
 				}
 
-				function disableSubmit(){
+				function disableSubmit() {
 					changeSubmitState(true);
 				}
 
-				function enableSubmit(){
+				function enableSubmit() {
 					changeSubmitState(false);
 				}
 
-				function changeSubmitState(state){
+				function changeSubmitState(state) {
 					var submit = document.getElementById("btnSubmit");
 					submit.disabled = state;
 				}
 
-				function showMsg(msg, msg_type){
+				function showMsg(msg, msg_type) {
 					changeMsgState(msg, "block", msg_type);
 				}
 
-				function disableMsg(){
+				function disableMsg() {
 					changeMsgState("", "none", "");
 				}
 
-				function changeMsgState(msg, visibility, newClass){
-						var msg_div = document.getElementById("messages");
-						msg_div.innerHTML = msg;
-						msg_div.className = newClass;
-						msg_div.style.display = visibility;
+				function changeMsgState(msg, visibility, newClass) {
+					var msg_div = document.getElementById("messages");
+					msg_div.innerHTML = msg;
+					msg_div.className = newClass;
+					msg_div.style.display = visibility;
 				}
 
 				function getSelectedAttacksID() {
 					var attacksID = [];
 					for (var i = 0; i < $scope.attacks.length; i++) {
 						var attack = $scope.attacks[i];
-						if (attack.select == true){
+						if (attack.select == true) {
 							attacksID.push(attack.id);
-							if(attack.hasSoftware)
+							if (attack.hasSoftware)
 								$scope.selectedAttacksWithSoftware.push(attacksID);
 						}
 					}
@@ -265,14 +287,14 @@ function showAttacks(){
 					attacksElem.value = $scope.selectedAttacksID;
 
 					var form = document.getElementById("myForm");
-						form.setAttribute("action", "../instructions");
-						form.setAttribute("method", "post");
-						form.submit();
+					form.setAttribute("action", "../instructions");
+					form.setAttribute("method", "post");
+					form.submit();
 				}
 
 				function downloadFile() {
 					var data = {
-						"attacks" : $scope.selectedAttacksID
+						"attacks": $scope.selectedAttacksID
 					};
 					var callback = function (recData) {
 						var json = JSON.parse(recData);
@@ -286,10 +308,10 @@ function showAttacks(){
 					sendPostRequest(data, callback, "downloadFile");
 				}
 
-				function setLoading(bool){
+				function setLoading(bool) {
 					var loader = document.getElementById("loader_panel");
-				    if(bool) loader.style.display = "block";
-				    else loader.style.display = "none";
+					if (bool) loader.style.display = "block";
+					else loader.style.display = "none";
 				}
 
 				function remotely() {
@@ -301,10 +323,10 @@ function showAttacks(){
 						alert("DATA: " + recData);
 					};
 					var data = {
-						"attacks" : $scope.selectedAttacksID,
-						"ip" : ipAddress,
-						"username" : user,
-						"password" : pass
+						"attacks": $scope.selectedAttacksID,
+						"ip": ipAddress,
+						"username": user,
+						"password": pass
 					};
 					sendPostRequest(data, callback, "remotely");
 				}
@@ -314,22 +336,22 @@ function showAttacks(){
 				}
 
 				function sendPostRequest(obj, callback, r_action) {
-				    setLoading(true);
+					setLoading(true);
 					$http({
 						method: "POST",
-						url:  "../wp-admin/admin-ajax.php",
+						url: "../wp-admin/admin-ajax.php",
 						params: {
-							"action" : r_action,
-							"data" : obj
+							"action": r_action,
+							"data": obj
 						}
 					}).
-					success( function( data, status, headers, config ) {
+					success(function (data, status, headers, config) {
 						setLoading(false);
-						if(data.success)
+						if (data.success)
 							callback(data.data);
 						else alert("Ocorreu um erro. Erro: " + data.data);
 					}).
-					error(function(data, status, headers, config) {
+					error(function (data, status, headers, config) {
 						setLoading(false);
 						alert("An error ocourrs during the remotely process. Make sure that all your data its correct!");
 					});
@@ -355,24 +377,24 @@ function showAttacks(){
 				function isValidIPAddress(ip) {
 					var valid = isIPv4(ip);
 					if (valid)
-                        return true;
+						return true;
 					return isIPv6(ip);
 				}
 
 				//WARN IPs por exemplo: 125.23.32 são ips válidos?
 				function isIPv4(ip) {
-                    var regEx = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
-                    return ip.match(regEx);
-                }
+					var regEx = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+					return ip.match(regEx);
+				}
 
 				function isIPv6(ip) {
-                    var regEx = "^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$";
-                    return ip.match(regEx);
-                }
+					var regEx = "^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$";
+					return ip.match(regEx);
+				}
 
 				//-------------------- END AUXILIARY METHODS -------------------
         }]);
-</script>';
+	</script>';
 }
 
 //TODO VER BUG DO CHOOSE FILE. NÃO SELECIONA BEM. PRINCIPALMENTE NO INICIO.
