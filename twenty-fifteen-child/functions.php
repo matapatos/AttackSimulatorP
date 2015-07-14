@@ -155,6 +155,8 @@ function showAttacks(){
             echo ',';
     }
     echo '];
+
+
 				$scope.geneType = "";
 				$scope.isRemotely = false;
 				$scope.selectedAttacksID = [];
@@ -669,7 +671,7 @@ function showInstructions(){
             $files_size = count($files);
             $j = 0;
             foreach ($files as $f) {
-                echo '{ string: "' . $f->string . '", file_path: "' . $f->file_path . '" }';
+                echo '{ string: "' . htmlspecialchars($f->string) . '", file_path: "' . $f->file_path . '" }';
                 $j += 1;
                 if($j < $files_size)
                     echo ',';
@@ -692,7 +694,7 @@ function showInstructions(){
             $files_size = count($files);
             $j = 0;
             foreach ($files as $f) {
-                echo '{ string: "' . $f->string . '", file_path: "' . $f->file_path . '" }';
+                echo '{ string: "' . htmlspecialchars($f->string) . '", file_path: "' . $f->file_path . '" }';
                 $j += 1;
                 if($j < $files_size)
                     echo ',';
