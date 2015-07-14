@@ -344,8 +344,6 @@ function check_getParameterOrSendErrorMSG($key){
 try{
     $data = str_replace("\\", "", $_REQUEST['data']);
     $jsonDATA = json_decode(json_decode(json_encode($data)));
-    if(empty($jsonDATA))
-        wp_send_json_error(MISSING_ARGUMENTS);
     hooks();
 }catch(Exception $ex){
     wp_send_json_error("Ocorreu um erro na transformação de parêmtros.");
