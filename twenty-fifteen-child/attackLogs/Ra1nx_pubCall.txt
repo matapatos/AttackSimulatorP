@@ -1,0 +1,20 @@
+daemon.log--> Jul 14 09:22:53 metasploitable dhclient: DHCPREQUEST of <null address> on eth0 to 192.168.190.254 port 67
+Jul 14 09:22:53 metasploitable dhclient: DHCPACK of 192.168.190.128 from 192.168.190.254
+Jul 14 09:22:53 metasploitable dhclient: can't create /var/lib/dhcp3/dhclient.eth0.leases: Permission denied
+Jul 14 09:22:53 metasploitable dhclient: bound to 192.168.190.128 -- renewal in 728 seconds.
+Jul 14 09:35:01 metasploitable dhclient: DHCPREQUEST of <null address> on eth0 to 192.168.190.254 port 67
+Jul 14 09:35:01 metasploitable dhclient: DHCPACK of 192.168.190.128 from 192.168.190.254
+Jul 14 09:35:01 metasploitable dhclient: can't create /var/lib/dhcp3/dhclient.eth0.leases: Permission denied
+Jul 14 09:35:01 metasploitable dhclient: bound to 192.168.190.128 -- renewal in 758 seconds.
+messages--> Jul 14 09:36:39 metasploitable -- MARK --
+syslog--> Jul 14 09:22:53 metasploitable dhclient: DHCPREQUEST of <null address> on eth0 to 192.168.190.254 port 67
+Jul 14 09:22:53 metasploitable dhclient: DHCPACK of 192.168.190.128 from 192.168.190.254
+Jul 14 09:22:53 metasploitable dhclient: can't create /var/lib/dhcp3/dhclient.eth0.leases: Permission denied
+Jul 14 09:22:53 metasploitable dhclient: bound to 192.168.190.128 -- renewal in 728 seconds.
+Jul 14 09:35:01 metasploitable dhclient: DHCPREQUEST of <null address> on eth0 to 192.168.190.254 port 67
+Jul 14 09:35:01 metasploitable dhclient: DHCPACK of 192.168.190.128 from 192.168.190.254
+Jul 14 09:35:01 metasploitable dhclient: can't create /var/lib/dhcp3/dhclient.eth0.leases: Permission denied
+Jul 14 09:35:01 metasploitable dhclient: bound to 192.168.190.128 -- renewal in 758 seconds.
+/etc/unreal/ircd.log-->
+[Tue Jul 14 09:18:01 2015] - Connect - msf_user!msf_user@192.168.190.130 [VHOST 5A0B3FAA.C0E92E51.FFFA6D49.IP]
+[Tue Jul 14 09:18:01 2015] - Disconnect - (0:0:9) msf_user!msf_user@192.168.190.130 [VHOST 5A0B3FAA.C0E92E51.FFFA6D49.IP]

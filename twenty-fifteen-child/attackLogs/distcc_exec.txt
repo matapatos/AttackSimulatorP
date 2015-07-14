@@ -1,0 +1,12 @@
+daemon.log--> Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_check_client) connection from ::ffff:192.168.190.130:51026
+Jul 14 09:40:14 metasploitable distccd[4830]: compile from main.c to main.o
+Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_r_file_timed) 10 bytes received in 0.000022s, rate 444kB/s
+Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_collect_child) cc times: user 0.000000s, system 0.000000s, 1056 minflt, 0 majflt
+Jul 14 09:40:14 metasploitable distccd[4830]: sh main.c on localhost completed ok
+Jul 14 09:40:14 metasploitable distccd[4830]: job complete
+syslog--> Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_check_client) connection from ::ffff:192.168.190.130:51026
+Jul 14 09:40:14 metasploitable distccd[4830]: compile from main.c to main.o
+Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_r_file_timed) 10 bytes received in 0.000022s, rate 444kB/s
+Jul 14 09:40:14 metasploitable distccd[4830]: (dcc_collect_child) cc times: user 0.000000s, system 0.000000s, 1056 minflt, 0 majflt
+Jul 14 09:40:14 metasploitable distccd[4830]: sh main.c on localhost completed ok
+Jul 14 09:40:14 metasploitable distccd[4830]: job complete
